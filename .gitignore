@@ -3,6 +3,10 @@
 *.out_py36
 *.pyc
 *.pyo
+*.tar
+*.zip
+v4-cokapi/backends/c_cpp/valgrind-3.11.0.zip
+v4-cokapi/backends/c_cpp/opt-cpp-backend.tar
 v4-cokapi/feedback/cokapi-feedback.db
 coding-the-matrix/
 node_modules/
@@ -19,3 +23,19 @@ v4-cokapi/backends/javascript/node-v6.0.0-darwin-x64/
 
 # this .gz file is too big to fit into a github repo
 v4-cokapi/backends/java/jdk-8u20-linux-x64.tar.gz
+
+# Compiled JavaScript
+v5-unity/build/
+*.bundle.js
+*.bundle.js.map
+
+# TypeScript build artifacts
+*.js
+*.js.map
+!webpack.config.js
+!**/js/lib/**/*.js
+
+# Node modules
+node_modules/
+
+// ...existing code...
