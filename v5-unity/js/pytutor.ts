@@ -349,6 +349,15 @@ export class ExecutionVisualizer {
 
     this.try_hook("end_constructor", {myViz:this});
     this.render(); // go for it!
+
+
+     // 页面加载完成后自动点击 customizeVizLink
+  setTimeout(() => {
+    let customizeLink = this.domRoot.find('#customizeVizLink');
+    if (customizeLink.length > 0) { // 确保元素存在
+      customizeLink.trigger('click');
+    }
+  }, 100); // 小延迟确保 DOM 已完全加载
   }
 
   /* API for adding a hook, created by David Pritchard
@@ -4271,7 +4280,7 @@ class NavigationController {
           <div style="margin-top: 12px; margin-bottom: 5px;">\
           线条样式:\
           <select id="jsplumbConnectorType">\
-            <option value="StateMachine" selected>Default</option>\
+            <option value="StateMachine" selected>StateMachine</option>\
             <option value="Bezier">Bezier</option>\
             <option value="Straight">Straight</option>\
             <option value="Flowchart">Flowchart</option>\
@@ -4301,6 +4310,12 @@ class NavigationController {
           </div>\
         </div>\
       ');
+
+       // 在所有UI元素创建完成后,加载保存的设置
+      this.loadVisualizationSettings();
+      
+        rerenderJsPlumbConnectors(); 
+
 
       // note that many of these options aren't present in the OLD OLD
       // OLD version of ./lib/jquery.jsPlumb-1.3.10-all-min.js that
@@ -4350,6 +4365,8 @@ class NavigationController {
         }
       });
 
+ 
+
       // show certain sliders depending on value of jsplumbConnectorType
       // use this as a reference:
       // https://community.jsplumbtoolkit.com/doc/connectors.html
@@ -4381,13 +4398,15 @@ class NavigationController {
           uiControlsPane.find('#cornerRadius').parent('.sliderWrapper').show();
           */
           uiControlsPane.find('#gap').parent('.sliderWrapper').show();
+           
+          
         }
 
         // always show arrow stuff
         uiControlsPane.find('#arrowLength,#arrowWidth,#arrowFoldback').parent('.sliderWrapper').show();
 
-        rerenderJsPlumbConnectors(); // re-render based on new connector type choice
-      }).val('StateMachine').change(); // <-- trigger a change event on this
+        rerenderJsPlumbConnectors(); // re-render based on new connector type choice 
+     }).val(JSON.parse(localStorage.getItem('vizSettings')).connectorType).change(); // <-- trigger a change event on this
                                        // initial setting to get the change
                                        // handler above to run
 
@@ -4402,10 +4421,11 @@ class NavigationController {
       uiControlsPane.find('#hideVarsChoices').html('<b><em>Choices:</em></b> ' + varnameChoices);
       uiControlsPane.find('#hideFieldsChoices').html('<b><em>Choices:</em></b> ' + fieldnameChoices);
 
-      uiControlsPane.find('#updateHideVarsBtn').click(() => {
+      uiControlsPane.find('#updateHideVarsBtn').click(() => { 
         let hideVarsLst = processHideString(uiControlsPane.find('#hideVars').val());
         let hideFieldsLst = processHideString(uiControlsPane.find('#hideFields').val());
         this.owner.dataViz.selectivelyHideVarsAndFields(hideVarsLst, hideFieldsLst);
+        this.saveVisualizationSettings();
       });
 
       return false; // don't follow the link and reload the page!
@@ -4424,6 +4444,66 @@ class NavigationController {
     // PROGRAMMATICALLY change the value, so evt.originalEvent should be undefined
     this.domRoot.find('#executionSlider').slider('value', v);
   }
+
+ // 添加保存设置到 localStorage 的方法
+   saveVisualizationSettings() {
+    const settings = {
+      connectorType: this.domRoot.find('#jsplumbConnectorType').val(),
+      smCurviness: this.domRoot.find('#smCurviness').val(),
+      bezierCurviness: this.domRoot.find('#bezierCurviness').val(), 
+      margin: this.domRoot.find('#margin').val(),
+      stub: this.domRoot.find('#stub').val(),
+      gap: this.domRoot.find('#gap').val(),
+      midpoint: this.domRoot.find('#midpoint').val(),
+      cornerRadius: this.domRoot.find('#cornerRadius').val(),
+      arrowLength: this.domRoot.find('#arrowLength').val(),
+      arrowWidth: this.domRoot.find('#arrowWidth').val(),
+      arrowFoldback: this.domRoot.find('#arrowFoldback').val()
+    };
+    
+    localStorage.setItem('vizSettings', JSON.stringify(settings));
+  }
+
+  // 从 localStorage 加载设置的方法
+  loadVisualizationSettings() {
+      const savedSettings = localStorage.getItem('vizSettings');
+  if (savedSettings) {
+    const settings = JSON.parse(savedSettings);
+    
+    // 先设置连接器类型,这会触发change事件显示相应的滑块
+    let connectorSelect = this.domRoot.find('#jsplumbConnectorType');
+    connectorSelect.val(settings.connectorType).change();     
+     connectorSelect.trigger('onclick');
+    connectorSelect.trigger('change');
+     
+    // 然后设置各个滑块的值
+    const sliderSettings = {
+      '#smCurviness': settings.smCurviness,
+      '#bezierCurviness': settings.bezierCurviness,
+      '#margin': settings.margin,
+      '#stub': settings.stub, 
+      '#gap': settings.gap,
+      '#midpoint': settings.midpoint,
+      '#cornerRadius': settings.cornerRadius,
+      '#arrowLength': settings.arrowLength,
+      '#arrowWidth': settings.arrowWidth,
+      '#arrowFoldback': settings.arrowFoldback
+    };
+
+    // 遍历设置滑块值和显示值
+    Object.entries(sliderSettings).forEach(([selector, value]) => {
+      if(value !== undefined) {
+        this.domRoot.find(selector)
+          .val(value)
+          .siblings('.sliderVal')
+          .html(value);
+      }
+    });
+  }
+  
+}
+
+   
 
   setVcrControls(msg: string, isFirstInstr: boolean, isLastInstr: boolean) {
     var vcrControls = this.domRoot.find("#vcrControls");
