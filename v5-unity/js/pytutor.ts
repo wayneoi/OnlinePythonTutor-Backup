@@ -1335,11 +1335,11 @@ class DataVisualizer {
       }
     } else if (this.params.lang === 'c' || this.params.lang === 'cpp') {
       if (label === 'Global frame') {
-        return 'Global variables';
+        return 'Global variables全局变量';
       } else if (label === 'Frames') {
-        return 'Stack';
+        return 'Stack栈变量';
       } else if (label === 'Objects') {
-        return 'Heap';
+        return 'Heap堆变量';
       }
     }
 
@@ -3718,7 +3718,7 @@ class ProgramOutputBox {
 
     var outputsHTML =
       '<div id="progOutputs">\
-         <div id="printOutputDocs">Print output (drag lower right corner to resize)</div>\n\
+         <div id="printOutputDocs">Printf/Cout标准输出</div>\n\
          <textarea id="pyStdout" cols="40" rows="5" wrap="off" readonly></textarea>\
        </div>';
 
@@ -3807,7 +3807,7 @@ class CodeDisplay {
       '<div id="codeDisplayDiv">\
          <div id="langDisplayDiv"></div>\
          <div id="pyCodeOutputDiv"/>\
-         <div id="editCodeLinkDiv"><a id="editBtn">Edit this code</a>\
+         <div id="editCodeLinkDiv"><a id="editBtn">编写代码</a>\
          </div>\
          <div id="legendDiv"/>\
          <div id="codeFooterDocs"></div>\
@@ -3818,8 +3818,8 @@ class CodeDisplay {
       this.domRoot.find('#editCodeLinkDiv').css('font-size', '10pt');
     }
     this.domRoot.find('#legendDiv')
-        .append('<svg id="prevLegendArrowSVG"/> line that just executed')
-        .append('<p style="margin-top: 4px"><svg id="curLegendArrowSVG"/> next line to execute</p>');
+        .append('<svg id="prevLegendArrowSVG"/> 正在执行所在行')
+        .append('<p style="margin-top: 4px"><svg id="curLegendArrowSVG"/> 将执行的下一行</p>');
     this.domRootD3.select('svg#prevLegendArrowSVG')
         .append('polygon')
         .attr('points', SVG_ARROW_POLYGON)
@@ -3884,7 +3884,7 @@ class CodeDisplay {
         if (this.owner.params.embeddedMode) {
           this.domRoot.find('#langDisplayDiv').html('C++ (gcc 4.8, C++11)');
         } else {
-          this.domRoot.find('#langDisplayDiv').html('C++ (gcc 4.8, C++11)<br/><font color="#e93f34">EXPERIMENTAL!</font> <a href="https://github.com/pgbovine/OnlinePythonTutor/blob/master/unsupported-features.md#c-and-c-unsupported-features" target="_blank">known limitations</a>');
+          this.domRoot.find('#langDisplayDiv').html('C++ (gcc 4.8, C++11)');
         }
       } else {
         this.domRoot.find('#langDisplayDiv').hide();
@@ -3895,7 +3895,8 @@ class CodeDisplay {
 
   renderPyCodeOutput() {
     var myCodOutput = this; // capture
-    this.domRoot.find('#pyCodeOutputDiv').empty();
+
+  
 
     // maps codeOutputLines down both table columns
     // TODO: get rid of pesky owner dependency
@@ -4174,10 +4175,10 @@ class NavigationController {
                      <div id="executionSlider"/>\
                      <div id="executionSliderFooter"/>\
                      <div id="vcrControls">\
-                       <button id="jmpFirstInstr", type="button">&lt;&lt; First</button>\
-                       <button id="jmpStepBack", type="button">&lt; Prev</button>\
-                       <button id="jmpStepFwd", type="button">Next &gt;</button>\
-                       <button id="jmpLastInstr", type="button">Last &gt;&gt;</button>\
+                       <button id="jmpFirstInstr", type="button">&lt;&lt; 第一步(F)</button>\
+                       <button id="jmpStepBack", type="button">&lt; 上一步(B)</button>\
+                       <button id="jmpStepFwd", type="button">下一步(N)&gt;</button>\
+                       <button id="jmpLastInstr", type="button">最后(E)&gt;&gt;</button>\
                      </div>\
                      <div id="curInstr">Step ? of ?</div>\
                      <div id="rawUserInputDiv">\
@@ -4187,7 +4188,7 @@ class NavigationController {
                      </div>\
                      <div id="errorOutput"/>\
                      <div id="creditsPane"></div>\
-                     <div id="uiControlsPane"><a id="customizeVizLink" href="#">Customize visualization</a> (<font color="#e93f34">NEW!</font>)</div>\
+                     <div id="uiControlsPane"><a id="customizeVizLink" href="#">自定义可视化</a> </div>\
                    </div>';
 
     this.domRoot.append(navHTML);
@@ -4196,6 +4197,45 @@ class NavigationController {
     this.domRoot.find("#jmpLastInstr").click(() => {this.owner.renderStep(this.nSteps - 1);});
     this.domRoot.find("#jmpStepBack").click(() => {this.owner.stepBack();});
     this.domRoot.find("#jmpStepFwd").click(() => {this.owner.stepForward();});
+
+    // 添加键盘快捷键处理
+  $(document).keydown((e) => {
+    
+    // 如果在输入框中,不触发快捷键
+        if ($('input:focus').length > 0) return;
+
+        switch(e.keyCode) {
+          case 70: // F key
+            this.domRoot.find("#jmpFirstInstr").click();
+            e.preventDefault();
+            break;
+          case 37: // Left arrow
+          case 66: // B key
+            this.domRoot.find("#jmpStepBack").click(); 
+            e.preventDefault();
+            break;
+          case 39: // Right arrow
+          case 78: // N key
+            this.domRoot.find("#jmpStepFwd").click();
+            e.preventDefault();
+            break;
+          case 69: // E key 
+            this.domRoot.find("#jmpLastInstr").click();
+            e.preventDefault();
+            break;
+        }
+      });
+
+  // 添加提示文本到按钮
+  this.domRoot.find("#jmpFirstInstr")
+    .attr('title', '快捷键: F');
+  this.domRoot.find("#jmpStepBack")
+    .attr('title', '快捷键: B 或 ←');
+  this.domRoot.find("#jmpStepFwd") 
+    .attr('title', '快捷键: N 或 →');
+  this.domRoot.find("#jmpLastInstr")
+    .attr('title', '快捷键: E');
+
 
     // disable controls initially ...
     this.domRoot.find("#vcrControls #jmpFirstInstr").attr("disabled", true);
@@ -4225,13 +4265,11 @@ class NavigationController {
       // customizeVizOptionsShown is on, so objects get made .draggable()
       this.customizeVizOptionsShown = true;
 
-      uiControlsPane.append(' \
-        <div style="margin-top: 8px;"/>\
-          <font color="#e93f34">Warning:</font> Reloading this page loses all changes;\
-          customizations <em>NOT</em> shared in URL or chat sessions\
-          <p/><b>Drag</b> any object around to move it. Customize its pointers:\
+       uiControlsPane.append(' \
+        <div style="margin-top: 8px;"/> \
+           拖动任何对象以移动自定义其指针样式:\
           <div style="margin-top: 12px; margin-bottom: 5px;">\
-          Line style:\
+          线条样式:\
           <select id="jsplumbConnectorType">\
             <option value="StateMachine" selected>Default</option>\
             <option value="Bezier">Bezier</option>\
@@ -4239,25 +4277,25 @@ class NavigationController {
             <option value="Flowchart">Flowchart</option>\
           </select>\
           </div>\
-          <div class="sliderWrapper">Curve: <input type="range" min="0" max="100" value="10" class="jsplumbOptionSlider" id="smCurviness"><span class="sliderVal">10</span></div>\
-          <div class="sliderWrapper">Curve: <input type="range" min="0" max="500" value="150" class="jsplumbOptionSlider" id="bezierCurviness"><span class="sliderVal">150</span></div>\
+          <div class="sliderWrapper">曲线: <input type="range" min="0" max="100" value="10" class="jsplumbOptionSlider" id="smCurviness"><span class="sliderVal">10</span></div>\
+          <div class="sliderWrapper">曲线: <input type="range" min="0" max="500" value="150" class="jsplumbOptionSlider" id="bezierCurviness"><span class="sliderVal">150</span></div>\
           <div class="sliderWrapper">Margin: <input type="range" min="0" max="20" value="5" class="jsplumbOptionSlider" id="margin"><span class="sliderVal">5</span></div>\
           <div class="sliderWrapper">Stub: <input type="range" min="0" max="50" value="0" class="jsplumbOptionSlider" id="stub"><span class="sliderVal">0</span></div>\
-          <div class="sliderWrapper">Gap: <input type="range" min="0" max="50" value="0" class="jsplumbOptionSlider" id="gap"><span class="sliderVal">0</span></div>\
+          <div class="sliderWrapper">差距: <input type="range" min="0" max="50" value="0" class="jsplumbOptionSlider" id="gap"><span class="sliderVal">0</span></div>\
           <div class="sliderWrapper">Midpoint: <input type="range" min="0" max="10" value="0.5" step="0.5" class="jsplumbOptionSlider" id="midpoint"><span class="sliderVal">0.5</span></div>\
           <div class="sliderWrapper">CornerRadius: <input type="range" min="0" max="10" value="0" class="jsplumbOptionSlider" id="cornerRadius"><span class="sliderVal">0</span></div>\
-          <div class="sliderWrapper">Arrow length: <input type="range" min="1" max="30" value="10" class="jsplumbOptionSlider" id="arrowLength"><span class="sliderVal">10</span></div>\
-          <div class="sliderWrapper">Arrow width: <input type="range" min="1" max="30" value="7" class="jsplumbOptionSlider" id="arrowWidth"><span class="sliderVal">7</span></div>\
-          <div class="sliderWrapper">Arrow fold: <input type="range" min="0" max="1" value="0.55" step="0.05" class="jsplumbOptionSlider" id="arrowFoldback"><span class="sliderVal">0.55</span></div>\
+          <div class="sliderWrapper">箭头长度: <input type="range" min="1" max="30" value="10" class="jsplumbOptionSlider" id="arrowLength"><span class="sliderVal">10</span></div>\
+          <div class="sliderWrapper">箭头宽度: <input type="range" min="1" max="30" value="7" class="jsplumbOptionSlider" id="arrowWidth"><span class="sliderVal">7</span></div>\
+          <div class="sliderWrapper">箭头折叠: <input type="range" min="0" max="1" value="0.55" step="0.05" class="jsplumbOptionSlider" id="arrowFoldback"><span class="sliderVal">0.55</span></div>\
           <div id="selectiveHideDiv" style="margin-top: 15px; padding: 6px 6px 6px 6px; border: 1px solid #ccc;">\
-            <b>Hide variables/fields</b> (elements may end up out of order, so reload page to reset)<br/>\
-            <button id="updateHideVarsBtn" style="margin-top: 8px;">Update visualization</button>\
-            <p/>All choices below; use part after colon to match all variables/fields with that name.<br/>\
-            <font color="#e93f34">(Double-check your spelling!)</font>\
-            <p/>Hide these variables:<br/>\
+            隐藏变量/字段 （元素可能最终会乱序，因此请重新加载页面以重置）<br/>\
+            <button id="updateHideVarsBtn" style="margin-top: 8px;">更新可视化</button>\
+            <p/>以下所有选项;在冒号后使用部分来匹配具有该名称的所有变量/字段。<br/>\
+            <font color="#e93f34">(仔细检查你的拼写!)</font>\
+            <p/>隐藏变量:<br/>\
             <textarea id="hideVars" rows="3" cols="70"/>\
             <div id="hideVarsChoices" style="width: 500px;"></div>\
-            <p style="margin-top: 15px;"/>Hide these object fields:<br/>\
+            <p style="margin-top: 15px;"/>隐藏对象字段:<br/>\
             <textarea id="hideFields" rows="3" cols="70"/>\
             <div id="hideFieldsChoices" style="width: 500px;"></div>\
           </div>\
