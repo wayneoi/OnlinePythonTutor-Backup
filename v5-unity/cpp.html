@@ -23,7 +23,19 @@ window.optOverride.frontendLang = 'cpp'; // hacky override before including visu
   <script type="text/javascript" src="build/visualize.bundle.js?32d9518d1a" charset="utf-8"></script>
 
 <!-- insert google-analytics.txt contents here -->
-
+  <!-- 添加 Ace Editor 主题 -->
+  <link rel="stylesheet" href="node_modules/ace-builds/css/ace.css">
+  
+  <!-- 加载 Geist Mono 字体 -->
+  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap"> -->
+  
+  <!-- 更新脚本引用 -->
+  <script src="node_modules/ace-builds/src-min/ace.js"></script>
+  <script src="node_modules/ace-builds/src-min/mode-c_cpp.js"></script>
+  <script src="node_modules/ace-builds/src-min/ext-language_tools.js"></script>
+  
+  <!-- 引入 Nord 主题 -->
+  <link rel="stylesheet" href="css/nord-theme.css">
 </head>
 
 <body>
@@ -36,22 +48,7 @@ window.optOverride.frontendLang = 'cpp'; // hacky override before including visu
 <div id="surveyHeader"></div>
 
 <div id="optHeader" style="font-family: Georgia, Palatino, Times, serif; font-size: 13pt; margin-bottom: 16px; margin-left: 16px;">
-C++ Tutor - Visualize C++ code execution to learn C++ online
-
-<span style="font-size: 10pt";>
-(also visualize
-<a href="visualize.html#py=2">Python2</a>,
-<a href="visualize.html#py=3">Python3</a>,
-<a href="java.html">Java</a>,
-<a href="javascript.html">JavaScript</a>,
-<a href="typescript.html">TypeScript</a>,
-<a href="ruby.html">Ruby</a>,
-<a href="c.html">C</a>,
-and
-<a href="cpp.html">C++</a>
-code)
-</span>
-
+<a href="cpp.html">可视化C++</a>   
 </div>
 
 </td>
@@ -59,9 +56,9 @@ code)
 </table>
 
 
-<div id="pyInputPane">
+<div id="pyInputPane" style="margin-left: 0;">
 
-<div id="codeInputWarnings">Write code in
+<div id="codeInputWarnings">编写代码使用
 
   <select id="pythonVersionSelector">
     <option value="cpp">C++ (gcc 4.8, C++11)</option>
@@ -76,8 +73,8 @@ code)
 <div id="surveyPane"></div>
 
 <p>
-<button id="executeBtn" class="bigBtn" type="button">Visualize Execution</button>
-<button style="margin-left: 20px;" id="liveModeBtn" class="bigBtn" type="button">Live Programming Mode</button>
+<button id="executeBtn" class="bigBtn" type="button">可视化执行</button>
+<!-- <button style="margin-left: 20px;" id="liveModeBtn" class="bigBtn" type="button">Live Programming Mode</button> -->
 </p>
 
 <div id="instructionsPane"></div>

@@ -90,11 +90,11 @@ export abstract class AbstractBaseFrontend {
   // so you will need to customize for your server:
   serverRoot = (window.location.protocol === 'https:') ?
                 'https://cokapi.com/' : // my certificate for https is registered via cokapi.com, so use it for now
-                'http://cokapi.com/';   // try cokapi.com so that hopefully it works through firewalls better than directly using its IP addr (which should be 104.237.139.253)
+                'http://localhost:3000/';   // try cokapi.com so that hopefully it works through firewalls better than directly using its IP addr (which should be 104.237.139.253)
                                         // (but that's just an unsubstantiated hunch)
 
   // randomly pick one backup server to load balance:
-  backupHttpServerRoot = (Math.random() >= 0.5) ? 'http://45.33.41.179/' : 'http://23.239.12.25/';
+  backupHttpServerRoot = (Math.random() >= 0.5) ? 'http://localhost:3000/' : 'http://localhost:3000/';
 
   // see ../../v4-cokapi/cokapi.js for details
   langSettingToJsonpEndpoint = {
@@ -305,13 +305,27 @@ export abstract class AbstractBaseFrontend {
   }
 
   startExecutingCode(startingInstruction=0) {
-    $('#executeBtn').html("Please wait ... executing (takes up to 10 seconds)");
+    let seconds = 0;
+    const timer = setInterval(() => {
+      seconds++;
+      $('#executeBtn').html(`稍后,马上就好...已等待 ${seconds} 秒${seconds >= 30 ? ',有点久了，要考虑算法复杂度' : ''}`);
+    }, 1000);
+    
+    // 保存 timer 以便后续清除
+    (this as any).executeTimer = timer;
+    
     $('#executeBtn').attr('disabled', true);
     this.isExecutingCode = true;
   }
 
   doneExecutingCode() {
-    $('#executeBtn').html("Visualize Execution");
+    // 清除计时器
+    if((this as any).executeTimer) {
+      clearInterval((this as any).executeTimer);
+      (this as any).executeTimer = null;
+    }
+    
+    $('#executeBtn').html("可视化执行");
     $('#executeBtn').attr('disabled', false);
     this.isExecutingCode = false;
   }
@@ -382,7 +396,7 @@ export abstract class AbstractBaseFrontend {
 
       var backendScript = this.langSettingToBackendScript[pyState];
       assert(backendScript);
-      var jsonp_endpoint = this.langSettingToJsonpEndpoint[pyState]; // maybe null
+     var jsonp_endpoint = this.langSettingToJsonpEndpoint[pyState]; // maybe null  
 
       if (!backendScript) {
         this.setFronendError(["Server configuration error: No backend script"]);
@@ -446,7 +460,8 @@ export abstract class AbstractBaseFrontend {
 
         var retryOnBackupServer = () => {
           // first log a #TryBackup error entry:
-          this.setFronendError(["Main server is busy or has errors; re-trying using backup server " + this.backupHttpServerRoot + " ... [#TryBackup]"]);
+         // this.setFronendError(["Main server is busy or has errors; re-trying using backup server " + this.backupHttpServerRoot + " ... [#TryBackup]"]); 
+         // by wayne
 
           // now re-try the query using the backup server:
           var backup_jsonp_endpoint = this.langSettingToJsonpEndpointBackup[pyState];
@@ -484,65 +499,69 @@ export abstract class AbstractBaseFrontend {
 
                 // the REAL call uses JSONP
                 // http://learn.jquery.com/ajax/working-with-jsonp/
-                $.ajax({
-                  url: jsonp_endpoint,
+                if(true){ //by wayne cancel
 
-                  // for testing
-                  //url: 'http://cokapi.com/test_failure_jsonp',
-                  //url: 'http://cokapi.com/unknown_url',
+                          $.ajax({
+                            url: jsonp_endpoint,
 
-                  // The name of the callback parameter, as specified by the YQL service
-                  jsonp: "callback",
-                  dataType: "jsonp",
-                  data: {user_script : codeToExec,
-                         options_json: JSON.stringify(backendOptionsObj),
-                         raw_input_json: this.rawInputLst.length > 0 ? JSON.stringify(this.rawInputLst) : null,
-                        },
-                  success: (dataFromBackend) => {
-                    var trace = dataFromBackend.trace;
-                    var shouldRetry = false;
+                            // for testing
+                            //url: 'http://cokapi.com/test_failure_jsonp',
+                            //url: 'http://cokapi.com/unknown_url',
 
-                    // the cokapi backend responded successfully, but the
-                    // backend may have issued an error. if so, then
-                    // RETRY with backupHttpServerRoot. otherwise let it
-                    // through to callbackWrapper
-                    if (!trace ||
-                        (trace.length == 0) ||
-                        (trace[trace.length - 1].event == 'uncaught_exception')) {
-                      if (trace.length == 1) {
-                        // we should only retry if there's a legit
-                        // backend error and not just a syntax error:
-                        var msg = trace[0].exception_msg;
-                        if (msg.indexOf('#BackendError') >= 0) {
-                          shouldRetry = true;
-                        }
-                      } else {
-                        shouldRetry = true;
-                      }
-                    }
+                            // The name of the callback parameter, as specified by the YQL service
+                            jsonp: "callback",
+                            dataType: "jsonp",
+                            data: {user_script : codeToExec,
+                                  options_json: JSON.stringify(backendOptionsObj),
+                                  raw_input_json: this.rawInputLst.length > 0 ? JSON.stringify(this.rawInputLst) : null,
+                                  },
+                            success: (dataFromBackend) => {
+                              var trace = dataFromBackend.trace;
+                              var shouldRetry = false;
 
-                    // don't bother re-trying for https since we don't
-                    // currently have an https backup server
-                    if (window.location.protocol === 'https:') {
-                      shouldRetry = false;
-                    }
+                              // the cokapi backend responded successfully, but the
+                              // backend may have issued an error. if so, then
+                              // RETRY with backupHttpServerRoot. otherwise let it
+                              // through to callbackWrapper
+                              if (!trace ||
+                                  (trace.length == 0) ||
+                                  (trace[trace.length - 1].event == 'uncaught_exception')) {
+                                if (trace.length == 1) {
+                                  // we should only retry if there's a legit
+                                  // backend error and not just a syntax error:
+                                  var msg = trace[0].exception_msg;
+                                  if (msg.indexOf('#BackendError') >= 0) {
+                                    shouldRetry = true;
+                                  }
+                                } else {
+                                  shouldRetry = true;
+                                }
+                              }
 
-                    if (shouldRetry) {
-                      retryOnBackupServer();
-                    } else {
-                      // accept our fate without retrying
-                      callbackWrapper(dataFromBackend);
-                    }
-                  },
-                  // if there's a server error, then ALWAYS retry:
-                  error: (jqXHR, textStatus, errorThrown) => {
-                    retryOnBackupServer();
-                    // use 'global: false;' below to NOT run the generic ajaxError() function
-                  },
+                              // don't bother re-trying for https since we don't
+                              // currently have an https backup server
+                              if (window.location.protocol === 'https:') {
+                                shouldRetry = false;
+                              }
 
-                  global: false, // VERY IMPORTANT! do not call the generic ajaxError() function when there's an error;
-                                 // only call our error handler above; http://api.jquery.com/ajaxerror/
-                });
+                              if (shouldRetry) {
+                                // retryOnBackupServer(); //cancel by wayne 
+                              } else {
+                                // accept our fate without retrying
+                                callbackWrapper(dataFromBackend);
+                              }
+                            },
+                            // if there's a server error, then ALWAYS retry:
+                            error: (jqXHR, textStatus, errorThrown) => {
+                              retryOnBackupServer();
+                              // use 'global: false;' below to NOT run the generic ajaxError() function
+                            },
+
+                            global: false, // VERY IMPORTANT! do not call the generic ajaxError() function when there's an error;
+                                          // only call our error handler above; http://api.jquery.com/ajaxerror/
+                          });
+                }
+
 
                }, "text");
 
@@ -614,14 +633,11 @@ export abstract class AbstractBaseFrontend {
   setSurveyHTML() {
     // use ${this.userUUID} within the string ...
     var survey_v14 = `
-    <p style="font-size: 9pt; margin-top: 12px; margin-bottom: 15px; line-height: 150%;">
-
-    <a style="font-size: 10pt; font-weight: bold;" href="http://pgbovine.net/support.htm" target="_blank">Donate</a> to help keep this website up and running
-    <br/>
-    Fill out a <a style="font-weight: bold;" href="https://docs.google.com/forms/d/e/1FAIpQLSfQJP1ojlv8XzXAvHz0al-J_Hs3GQu4XeblxT8EzS8dIzuaYA/viewform?entry.956368502=${this.userUUID}" target="_blank">short user survey</a> to support our research
-    </p>`;
+     `;
     $('#surveyPane').html(survey_v14);
   }
+
+  
 } // END class AbstractBaseFrontend
 
 
@@ -667,7 +683,7 @@ v10: (deployed on 2016-12-05) - survey of how native languages affects learning 
     $('#surveyPane').html(survey_v10);
 
 v11: labinthewild python debugging experiment (deployed on 2017-07-28, taken down on 2017-09-12)
-    var survey_v11 = `<p style="font-size: 10pt; margin-top: 12px; margin-bottom: 15px; line-height: 150%;">
+    var survey_v11 = `<p style="font-size: 10pt; margin-top: 12px; margin-bottom: 15px; line-height: 150%">
                         <span>
                           <span style="color: #e93f34;">Support our research and practice Python</span>
                           by trying our new
