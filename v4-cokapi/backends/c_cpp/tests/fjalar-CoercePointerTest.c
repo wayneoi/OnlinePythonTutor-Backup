@@ -42,13 +42,13 @@ baz junk;
 void view_bar_as_foo(struct bar* bar_as_foo) {}
 
 int main() {
-  foo* f = (foo*)malloc(sizeof(*f));
-  struct bar* b = (struct bar*)malloc(sizeof(*b));
+  foo* f = MC_NEW(foo);
+  struct bar* b = MC_NEW(struct bar);
 
   f->foo_int = 42;
   f->foo_str = (char*)strdup("f->foo_str");
   f->foo_double = 2.718;
-  f->foo_baz = (void*)malloc(sizeof(baz));
+  f->foo_baz = MC_NEW(baz);
   ((baz*)(f->foo_baz))->baz_int = 103083;
   strcpy(((baz*)(f->foo_baz))->baz_str, "TEN_BYTES");
 

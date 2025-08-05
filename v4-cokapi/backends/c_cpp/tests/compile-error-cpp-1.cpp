@@ -1,5 +1,5 @@
 #include <stdlib>
 
 int main() {
-  int* x = malloc(2*sizeof(*x));
+  int* x = MC_NEW_ARRAY(int, 2);
 }

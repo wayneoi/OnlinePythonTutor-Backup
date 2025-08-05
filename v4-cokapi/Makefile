@@ -1,5 +1,5 @@
 all:
-	jshint cokapi.js && node cokapi.js
+	jshint cokapi.js  && node cokapi.js local
 
 local:
 	jshint cokapi.js && node cokapi.js local

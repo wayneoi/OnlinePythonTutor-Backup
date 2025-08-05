@@ -55,7 +55,7 @@ int main()
 
   printf("Size of struct point: %i\n", sizeof(struct point));
 
-  pointPtr = malloc(5*(sizeof(struct point)));
+  pointPtr = MC_NEW_ARRAY(struct point, 5);
 
   basePtr = pointPtr + 100;
 

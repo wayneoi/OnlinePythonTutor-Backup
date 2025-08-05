@@ -84,7 +84,7 @@ char* returnFooString(int** doubleIntPtr, unsigned short ushortValue)
 
 double* returnDoublePtr(UIntPtr uintPtrVar, rhubarbInt64* Int64PtrVar)
 {
-  double* tempDouble = (double*)malloc(sizeof(double));
+  double* tempDouble = MC_NEW(double);
   *tempDouble = (double)((*uintPtrVar) - (*Int64PtrVar)) / 7;
   return tempDouble;
 }

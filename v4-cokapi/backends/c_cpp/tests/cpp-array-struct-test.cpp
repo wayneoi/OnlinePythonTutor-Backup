@@ -125,10 +125,10 @@ int main()
    population[0].SS);
 
   globalInt = 6170;
-  globalIntPtr = (int*)malloc(sizeof(*globalIntPtr));
+  globalIntPtr = MC_NEW(int);
   *globalIntPtr = 6111;
 
-  populationPtr = (buffer*)malloc(sizeof(*populationPtr));
+  populationPtr = MC_NEW(buffer);
   strcpy(populationPtr->firstName, "123456789");
   populationPtr->age = 69;
   strcpy(populationPtr->middleName, "Ricky");

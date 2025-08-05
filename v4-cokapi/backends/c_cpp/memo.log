@@ -1,0 +1,55 @@
+valgrind-3.11.0/memcheck/mc_main.c - 主要的内存跟踪逻辑
+valgrind-3.11.0/memcheck/mc_include.h - 类型系统定义
+valgrind-3.11.0/memcheck/mc_translate.c - 指令翻译和内存访问跟踪
+vg_to_opt_trace.py - 转换 valgrind 输出为 OPT JSON 格式
+
+
+mc_include.h - 包含主要的数据结构定义
+mc_main.c - 主要的内存跟踪逻辑
+mc_translate.c - 指令转换和内存访问跟踪
+
+1添加新的数据结构来保存更多类型信息
+2扩展现有的内存块结构以支持更多元数据
+3添加新的标志位用于只读内存跟踪
+进入容器 执行命令
+docker exec -u root -it charming_hopper bash  
+docker exec  -it charming_hopper bash  
+
+单独启动一个非临时容器可以供反复调试
+  
+ docker exec charming_hopper python /tmp/opt-cpp-backend/run_cpp_backend.py "int main() {int x=12345;}" cpp --stdin=
+
+regtest:
+	docker run -t -i --rm --user=netuser --net=none --cap-drop all -w /tmp/opt-cpp-backend/tests pgbovine/opt-cpp-backend:v1 python golden_test.py --all
+
+bash:
+	docker run -t -i --rm --user=netuser --net=none --cap-drop all pgbovine/opt-cpp-backend:v1 bash
+
+docker cp charming_hopper:/tmp/opt-cpp-backend/usercode.vgtrace "c:\github\OnlinePythonTutor-Backup\v4-cokapi\backends\c_cpp\usercode.vgtrace
+
+需要增加:
+
+增强的类型信息(字节大小、目标类型)
+数组元数据(元素字节大小、堆块信息、越界地址)
+只读内存标记
+docker cp c:\github\OnlinePythonTutor-Backup\v4-cokapi\backends\c_cpp\valgrind-3.11.0 charming_hopper:/tmp/opt-cpp-backend/
+
+docker cp "c:\github\OnlinePythonTutor-Backup\v4-cokapi\backends\c_cpp\vg_to_opt_trace.py" charming_hopper:/work/
+docker cp "c:\github\OnlinePythonTutor-Backup\v4-cokapi\backends\c_cpp\run_cpp_backend.py" charming_hopper:/work/
+docker cp "c:\github\OnlinePythonTutor-Backup\v4-cokapi\backends\c_cpp\vg_to_opt_trace.py" charming_hopper:/tmp/opt-cpp-backend/
+docker cp "c:\github\OnlinePythonTutor-Backup\v4-cokapi\backends\c_cpp\run_cpp_backend.py" charming_hopper:/tmp/opt-cpp-backend/
+
+docker commit charming_hopper my_cpp_backend_new:latest  # 创建新的镜像
+docker save -o my_cpp_backend_new.tar my_cpp_backend_new:latest  # 保存为 tar 文件	
+docker load -i my_cpp_backend_new.tar # 加载镜像
+
+
+cd v5-unity
+npm run py3start # apt install python3-bottle
+
+cd v4-cokapi
+make local
+
+#npm run webpack 监控改动自动编译
+
+[标准错误]: Error response from daemon: No such container: charming_hopper

@@ -16,6 +16,8 @@ declare var diff_match_patch: any;
 declare var codeopticonUsername: string; // FIX later when porting Codeopticon
 declare var codeopticonSession: string;  // FIX later when porting Codeopticon
 
+declare function md5(s: string): string;
+
 require('./lib/diff_match_patch.js');
 require('./lib/jquery.ba-dotimeout.min.js');
 
@@ -176,14 +178,13 @@ export abstract class AbstractBaseFrontend {
           this.num414Tries++;
           $("#executeBtn").click();
         } else {
-          this.setFronendError(["Server error! Your code might be too long for this tool. Shorten your code and re-try. [#CodeTooLong]"]);
+          this.setFronendError(["代码过长"]);
           this.num414Tries = 0; // reset this to 0 AFTER setFronendError so that in setFronendError we can know that it's a 414 error (super hacky!)
         }
       } else {
         this.setFronendError(
-                        ["Server error! Your code might have an INFINITE LOOP or be running for too long.",
-                         "The server may also be OVERLOADED. Or you're behind a FIREWALL that blocks access.",
-                         "Try again later. This site is free with NO technical support. [#UnknownServerError]"]);
+                        ["服务未启动或者你的代码存在超时也可能服务器过载.",                         
+                         "稍后再试，或者联系管理员排查问题。"]);
       }
       this.doneExecutingCode();
     });
@@ -266,7 +267,8 @@ export abstract class AbstractBaseFrontend {
     var ret = {cumulative_mode: ($('#cumulativeModeSelector').val() == 'true'),
                heap_primitives: ($('#heapPrimitivesSelector').val() == 'true'),
                show_only_outputs: false, // necessary for legacy reasons, ergh!
-               origin: this.originFrontendJsFile};
+               origin: this.originFrontendJsFile,
+               stdin: ''} as any; // add stdin support for C++
     return ret;
   }
 
@@ -425,7 +427,7 @@ export abstract class AbstractBaseFrontend {
         // the URL way too long. in that case, just make it null and don't
         // send a delta (NB: actually set it to a canary value "overflow").
         // we'll lose some info but at least the URL will hopefully not overflow:
-        if (deltaObjStringified.length > 4096) {
+        if (deltaObjStringified.length > 4096) { //代码长度限制 by wayne
           deltaObjStringified = "overflow"; // set a canary to overflow
         }
       } else {
@@ -436,16 +438,22 @@ export abstract class AbstractBaseFrontend {
         }
       }
 
-      // if we can find a matching cache entry, then use it!!!
-      if (this.traceCache) {
-        var appState = this.getAppState();
-        var cachedTrace = this.traceCacheGet(appState);
-        if (cachedTrace) {
-          //console.log("CACHE HIT!", appState);
-          callbackWrapper({code: (appState as any).code, trace: cachedTrace});
-          return; // return early without going to the server at all!
+      // --- 本地缓存逻辑：user_script 的 md5 作为 key ---
+      let cacheKey = null;
+      if (typeof window.md5 === 'function') {
+        cacheKey = 'exec_cache_' + window.md5(codeToExec);
+      }
+      if (cacheKey) {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          try {
+            const dataFromBackend = JSON.parse(cached);
+            callbackWrapper(dataFromBackend);
+            return; // 命中缓存直接返回
+          } catch (e) { /* ignore parse error */ }
         }
       }
+      // --- 本地缓存逻辑结束 ---
 
       // everything below here is an ajax (async) call to the server ...
       if (jsonp_endpoint) {
@@ -475,7 +483,15 @@ export abstract class AbstractBaseFrontend {
                    options_json: JSON.stringify(backendOptionsObj),
                    raw_input_json: this.rawInputLst.length > 0 ? JSON.stringify(this.rawInputLst) : null,
                   },
-            success: callbackWrapper
+            success: (dataFromBackend) => {
+              // --- 备份服务器响应也写入缓存 ---
+              if (cacheKey) {
+                console.log('准备写入缓存', cacheKey, dataFromBackend);
+                try { localStorage.setItem(cacheKey, JSON.stringify(dataFromBackend)); } catch (e) {}
+              }
+              // --- 缓存逻辑结束 ---
+              callbackWrapper(dataFromBackend);
+            }
           });
         }
 
@@ -514,8 +530,14 @@ export abstract class AbstractBaseFrontend {
                             data: {user_script : codeToExec,
                                   options_json: JSON.stringify(backendOptionsObj),
                                   raw_input_json: this.rawInputLst.length > 0 ? JSON.stringify(this.rawInputLst) : null,
-                                  },
+                                  stdin: backendOptionsObj.stdin || ''}, // 添加 stdin 参数
                             success: (dataFromBackend) => {
+                              // --- ajax 成功后写入缓存 ---
+                              if (cacheKey) {
+                                console.log('准备写入缓存', cacheKey, dataFromBackend);
+                                try { localStorage.setItem(cacheKey, JSON.stringify(dataFromBackend)); } catch (e) {}
+                              }
+                              // --- 缓存逻辑结束 ---
                               var trace = dataFromBackend.trace;
                               var shouldRetry = false;
 
@@ -575,7 +597,14 @@ export abstract class AbstractBaseFrontend {
                user_uuid: this.userUUID,
                session_uuid: this.sessionUUID,
                diffs_json: deltaObjStringified},
-               callbackWrapper, "json");
+               (dataFromBackend) => {
+                 // --- get 成功后写入缓存 ---
+                 if (cacheKey) {
+                   try { localStorage.setItem(cacheKey, JSON.stringify(dataFromBackend)); } catch (e) {}
+                 }
+                 // --- 缓存逻辑结束 ---
+                 callbackWrapper(dataFromBackend);
+               }, "json");
       }
   }
 

@@ -1,49 +1,121 @@
-export var exampleHeaderHtml = `<p>Here are some free courses that either already use Python Tutor or are good to use with it:
-</p>
+// 动态加载 example-code/users 目录下所有 .cpp 文件
+export async function fetchUserCppExampleList(): Promise<string[]> {
+  const resp = await fetch('http://localhost:3000/api/user-cpp-files');
+  if (!resp.ok) return [];
+  return await resp.json();
+}
 
-<p>
-edX:
+// 动态生成链接并绑定点击事件，点击后加载代码到编辑框
+document.addEventListener('DOMContentLoaded', () => {
+  // 初次加载：自动从 localStorage 读取默认文件名和代码
+  const defaultFileName = localStorage.getItem('default_load_file_name');
+  if (defaultFileName && defaultFileName.endsWith('.cpp')) {
+    const code = localStorage.getItem('cpp_code_' + defaultFileName) || '';
+    // 设置到 Ace 编辑器
+    const aceEditor = (window as any).ace && (window as any).ace.edit && (window as any).ace.edit('codeInputPane');
+    if (aceEditor && typeof aceEditor.setValue === 'function') {
+      aceEditor.setValue(code, -1);
+    } else if ((window as any).editor && typeof (window as any).editor.setValue === 'function') {
+      (window as any).editor.setValue(code);
+    } else {
+      const textarea = document.getElementById('codeInput') as HTMLTextAreaElement;
+      if (textarea) textarea.value = code;
+    }
+    // 设置文件名输入框
+    const fileNameInput = document.getElementById('cppFileNameInput') as HTMLInputElement;
+    if (fileNameInput) fileNameInput.value = defaultFileName;
+  }
 
-<a href="https://www.edx.org/course/python-data-science-uc-san-diegox-dse200x">Python for Data Science</a> |
-<a href="https://www.edx.org/course/introduction-computer-science-mitx-6-00-1x-10">Intro CS w/ Python (MIT)</a> |
-<a href="https://www.edx.org/course/introduction-computational-thinking-data-mitx-6-00-2x-5#!">Data Science (MIT)</a> |
-<a href="https://www.edx.org/course/introduction-computer-science-harvardx-cs50x">Intro CS (Harvard)</a> | <br/>
-<a href="https://www.edx.org/course/software-construction-java-mitx-6-005-1x">Software Construction in Java</a> |
-<a href="https://www.edx.org/course/using-python-research-harvardx-ph526x">Python for Research</a> |
-<a href="https://www.edx.org/course/statistics-probability-data-science-uc-san-diegox-dse210x">Stats w/ Python</a> |
-<a href="https://www.edx.org/course/how-win-coding-competitions-secrets-itmox-i2cpx-0#!">Coding Competitions</a>
-</p>
+  fetchUserCppExampleList().then(files => {
+    const html = files.map(f => `<a class="exampleLink userCppExampleLink" data-filename="${f}" href="#">${f}</a>`).join(' | ');
+    const container = document.getElementById('cppUserExampleList');
+    if (container) container.innerHTML = html;
 
-<p>
-Coursera:
+    // 绑定点击事件
+    document.querySelectorAll('.userCppExampleLink').forEach(link => {
+      link.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const filename = (e.target as HTMLElement).getAttribute('data-filename');
+        if (!filename) return;
+        // 获取代码内容
+        const resp = await fetch(`http://localhost:3000/api/user-cpp-file?name=${encodeURIComponent(filename)}`);
+        if (!resp.ok) return;
+        const code = await resp.text();
+        // 假设编辑器是 ace 编辑器，id 为 codeInputPane
+        const aceEditor = (window as any).ace && (window as any).ace.edit && (window as any).ace.edit('codeInputPane');
+         
+        if (aceEditor && typeof aceEditor.setValue === 'function') {
+          aceEditor.setValue(code, -1); // -1 保持光标在开头
+        } else if ((window as any).editor && typeof (window as any).editor.setValue === 'function') {
+          (window as any).editor.setValue(code);
+        } else {
+          const textarea = document.getElementById('codeInput') as HTMLTextAreaElement;
+          if (textarea) textarea.value = code;
+        }
 
-<a href="https://www.coursera.org/learn/learn-to-program">Intro CS w/ Python</a> |
-<a href="https://www.coursera.org/learn/python">Intro Python</a> |
-<a href="https://www.coursera.org/learn/python-data-analysis">Data Science w/ Python</a> |
-<a href="https://www.coursera.org/specializations/python">Intro Python series</a><br/>
-</p>
+        // 自动填充文件名到 input 框
+        const fileNameInput = document.getElementById('cppFileNameInput') as HTMLInputElement;
+        if (fileNameInput) fileNameInput.value = filename;
+      });
+    });
+  });
 
-<p>
-Udacity:
+  // 保存按钮逻辑
+  const saveBtn = document.getElementById('saveCppFileBtn');
 
-<a href="https://www.udacity.com/course/intro-to-computer-science--cs101">Intro CS w/ Python</a> |
-<a href="https://www.udacity.com/course/intro-to-java-programming--cs046">Intro Java</a> |
-<a href="https://www.udacity.com/course/intro-to-artificial-intelligence--cs271">Intro A.I.</a> |
-<a href="https://www.udacity.com/course/design-of-computer-programs--cs212">Design of Computer Programs</a> | <br/>
-<a href="https://www.udacity.com/course/javascript-basics--ud804">JavaScript Basics</a> |
-<a href="https://www.udacity.com/course/technical-interview--ud513">Technical Interview Prep</a>
-</p>
+  // 显示/隐藏示例代码区域（用原生 JS 替换 jQuery）
+   setTimeout(() => {
+            const exampleSnippets = document.getElementById('exampleSnippets');
+            if (exampleSnippets) exampleSnippets.style.display = '';
+            const showExampleLink = document.getElementById('showExampleLink');
+            if (showExampleLink) showExampleLink.style.display = 'none';
+        }, 1000);
+  
 
-<p>
-Textbooks:
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async () => {
+      const fileNameInput = document.getElementById('cppFileNameInput') as HTMLInputElement;
+      const fileName = fileNameInput ? fileNameInput.value.trim() : '';
+      if (!fileName || !fileName.endsWith('.cpp')) {
+        alert('请输入有效的 .cpp 文件名');
+        return;
+      }
+      // 获取 Ace 编辑器内容
+      let code = '';
+      const aceEditor = (window as any).ace && (window as any).ace.edit && (window as any).ace.edit('codeInputPane');
+      if (aceEditor && typeof aceEditor.getValue === 'function') {
+        code = aceEditor.getValue();
+      } else if ((window as any).editor && typeof (window as any).editor.getValue === 'function') {
+        code = (window as any).editor.getValue();
+      } else {
+        const textarea = document.getElementById('codeInput') as HTMLTextAreaElement;
+        if (textarea) code = textarea.value;
+      }
+      // 本地存储一份
+      localStorage.setItem('cpp_code_' + fileName, code);
+      localStorage.setItem('default_load_file_name',fileName);
+      // 发送到后端
+      const resp = await fetch('http://localhost:3000/api/save-user-cpp-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName, code })
+      });
+      if (resp.ok) {
+        saveBtn.textContent = '已保存';
+        setTimeout(() => {
+          saveBtn.textContent = '保存';
+        }, 3000);
+      } else {
+        alert('保存失败！');
+      }
+    });
+  }
+});
 
-<a href="http://composingprograms.com/">Composing Programs</a> |
-<a href="https://www.inferentialthinking.com/">Computational Thinking</a> |
-<a href="http://interactivepython.org/runestone/static/thinkcspy/index.html">Interactive Python</a> |
-<a href="http://runestoneinteractive.org/library.html">Runestone Books</a>
-</p>
+export var exampleHeaderHtml = `
 
-<p style="margin-top: 35px;">The examples below illustrate some of this tool's visualization capabilities but are <em>not</em> meant as standalone programming lessons. See the courses listed above for lessons.</p>`
+
+`
 
 // extraneous:
 // <a href="https://www.edx.org/course/nature-code-biology-javascript-epflx-nic1-0x">Comp. Bio w/ JavaScript</a> | <br/>
@@ -388,18 +460,6 @@ export var C_EXAMPLES = {
 };
 
 
-export var cppExamplesHtml = `<p style="margin-top: 25px; font-weight: bold;">C++ Examples</p>
-
-<p style="margin-top: 5px;">
-  <a class="exampleLink" id="cppFirstLink" href="#">Basic</a> |
-  <a class="exampleLink" id="cppPassRefLink" href="#">Pass by ref</a> |
-  <a class="exampleLink" id="cppClassLink" href="#">Class</a> |
-  <a class="exampleLink" id="cppClassPtrLink" href="#">Class pointer</a> |
-  <a class="exampleLink" id="cppDateLink" href="#">Date class</a> |
-  <a class="exampleLink" id="cppInheritLink" href="#">Inheritance</a> |
-  <a class="exampleLink" id="cppVirtualLink" href="#">Virtual method</a>
-</p>`;
-
 export var CPP_EXAMPLES = {
   cppClassLink: 'cpp-class-basic.cpp',
   cppDateLink: 'cpp-class-date.cpp',
@@ -407,5 +467,22 @@ export var CPP_EXAMPLES = {
   cppFirstLink: 'cpp-first.cpp',
   cppInheritLink: 'cpp-inheritance.cpp',
   cppPassRefLink: 'cpp-pass-by-ref.cpp',
-  cppVirtualLink: 'cpp-virtual-method.cpp',
+  cppVirtualLink: 'cpp-virtual-method.cpp', // 确保有这个 key
 };
+
+export var cppExamplesHtml = `<p style="margin-top: 25px; font-weight: bold;">C++ 代码示例</p>
+
+<p style="margin-top: 5px;">
+  <a class="exampleLink" id="cppFirstLink" href="#">基本</a> |
+  <a class="exampleLink" id="cppPassRefLink" href="#">Pass by ref</a> |
+  <a class="exampleLink" id="cppClassLink" href="#">类</a> |
+  <a class="exampleLink" id="cppClassPtrLink" href="#">Class pointer</a> |
+  <a class="exampleLink" id="cppDateLink" href="#">日期 class</a> |
+  <a class="exampleLink" id="cppInheritLink" href="#">继承</a> |
+  <a class="exampleLink" id="cppVirtualLink" href="#">虚函数</a>
+</p>
+
+<div id="cppUserExampleList"></div>
+
+`;
+//此处实现 加载一个文件列表，用来动态获取根目录下example-code/users目录内的所有cpp文件

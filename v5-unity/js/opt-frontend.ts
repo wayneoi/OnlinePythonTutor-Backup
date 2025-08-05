@@ -1,5 +1,5 @@
 // Python Tutor: https://github.com/pgbovine/OnlinePythonTutor/
-// Copyright (C) Philip Guo (philip@pgbovine.net)
+// Copyright (C) Philip Guo (philip@pgbovine.com)
 // LICENSE: https://github.com/pgbovine/OnlinePythonTutor/blob/master/LICENSE.txt
 
 /* TODO:
@@ -96,7 +96,9 @@ export class OptFrontend extends AbstractBaseFrontend {
       $('#embedCodeOutput').val(iframeStr);
     });
 
-    this.initAceEditor(420);
+    this.initAceEditor( $('#codeInputPane').height() );
+    this.pyInputAceEditor.resize( ); // force it to resize to the right height
+    this.pyInputAceEditor.focus(); 
 
     // for some weird reason, jQuery doesn't work here:
     //   $(window).bind("hashchange"
@@ -261,7 +263,8 @@ export class OptFrontend extends AbstractBaseFrontend {
     this.pyInputAceEditor.$blockScrolling = Infinity; // kludgy to shut up weird warnings
 
     // auto-grow height as fit
-    this.pyInputAceEditor.setOptions({minLines: 18, maxLines: 1000});
+    this.pyInputAceEditor.setOptions({ maxLines: Infinity});
+    //this.pyInputAceEditor.setAutoScrollEditorIntoView(true);
 
     $('#codeInputPane').css('width', '700px');
     $('#codeInputPane').css('height', height + 'px'); // VERY IMPORTANT so that it works on I.E., ugh!
@@ -355,7 +358,12 @@ export class OptFrontend extends AbstractBaseFrontend {
   }
 
   pyInputGetValue() {
-    return this.pyInputAceEditor.getValue();
+    let code = this.pyInputAceEditor.getValue();
+    const lang = $('#pythonVersionSelector').val();
+    if (lang === 'cpp') {
+        
+    }
+    return code;
   }
 
   pyInputSetValue(dat) {
@@ -747,6 +755,16 @@ export class OptFrontend extends AbstractBaseFrontend {
       this.executeCode(this.preseededCurInstr); // will switch to 'display' mode
     }
     $.bbq.removeState(); // clean up the URL no matter what
+  }
+
+  getBaseBackendOptionsObj() {
+    var ret = super.getBaseBackendOptionsObj();
+    // 获取C++的标准输入内容
+    const stdinElem = document.getElementById('cppStdinInput') as HTMLTextAreaElement;
+    if (stdinElem) {
+      ret.stdin = stdinElem.value || '';
+    }
+    return ret;
   }
 
 } // END class OptFrontend

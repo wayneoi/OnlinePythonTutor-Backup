@@ -715,7 +715,7 @@ $(document).ready(function() {
   $("#footer").append(footerHtml);
 
   // insert a toggle for examples after #exampleSnippets, then hide it
-  $("#exampleSnippets").after('<a href="#" id="showExampleLink" style="font-size: 11pt;">Show example code and courses</a>');
+  $("#exampleSnippets").after('<a href="#" id="showExampleLink" style="font-size: 11pt;">示例代码</a>');
   $("#showExampleLink").click(() => {
     $("#exampleSnippets").show();
     $("#showExampleLink").hide();

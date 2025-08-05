@@ -178,7 +178,27 @@ function initDeltaObj() {
 }
 
 function initAceEditor(height) {
-  pyInputAceEditor = ace.edit('codeInputPane');
+  this.pyInputAceEditor = ace.edit('codeInputPane');
+  //by wayne   设置现代主题 start
+  this.pyInputAceEditor.setOptions({
+    theme: 'ace/theme/chrome',
+    mode: 'ace/mode/c_cpp',
+    fontSize: '14px',
+    fontFamily: "'Geist Mono', monospace",
+    enableLiveAutocompletion: true,
+    showPrintMargin: false,
+    highlightActiveLine: true,
+    displayIndentGuides: true,
+    maxLines: Infinity,
+    minLines:20,
+    wrap:false,
+    scrollPastEnd:0.5
+  });
+
+  // 强制更新布局
+  this.pyInputAceEditor.resize(true);
+//by wayne   设置现代主题  end
+
   var s = pyInputAceEditor.getSession();
   // tab -> 4 spaces
   s.setTabSize(4);
@@ -192,7 +212,7 @@ function initAceEditor(height) {
   pyInputAceEditor.$blockScrolling = Infinity; // kludgy to shut up weird warnings
 
   // auto-grow height as fit
-  pyInputAceEditor.setOptions({minLines: 18, maxLines: 1000});
+ // pyInputAceEditor.setOptions({minLines: 18, maxLines: 1000});
 
   $('#codeInputPane').css('width', '700px');
   $('#codeInputPane').css('height', height + 'px'); // VERY IMPORTANT so that it works on I.E., ugh!
@@ -1387,7 +1407,7 @@ function startExecutingCode() {
 }
 
 function doneExecutingCode() {
-  $('#executeBtn').html("Visualize Execution");
+  $('#executeBtn').html("as Execution");
   $('#executeBtn').attr('disabled', false);
   isExecutingCode = false; // nasty global
 }

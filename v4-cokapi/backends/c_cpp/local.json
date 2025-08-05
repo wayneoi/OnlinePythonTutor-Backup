@@ -1,0 +1,254 @@
+/**/
+typeof jQuery30001539733355527535_1747442217465 === 'function' && jQuery30001539733355527535_1747442217465({
+    "code": "#include <iostream>\n\nint main() {\n  int* x = new int[3];\n  x[1] = 20;\n  int* p = &x[1]; // pointer into middle\n  const char** fruit = new const char*[3];\n  fruit[1] = \"bananas\";\n  std::cout << \"Yum \" << *p << \" \" << fruit[1];\n  return 0;\n}",
+    "trace": [{
+        "event": "step_line",
+        "func_name": "main",
+        "globals": {},
+        "heap": {},
+        "line": 3,
+        "ordered_globals": [],
+        "stack_to_render": [{
+            "encoded_locals": {},
+            "frame_id": "0xFFF000BD0",
+            "func_name": "main",
+            "is_highlighted": true,
+            "is_parent": false,
+            "is_zombie": false,
+            "line": 3,
+            "ordered_varnames": [],
+            "parent_frame_id_list": [],
+            "unique_hash": "main_0xFFF000BD0"
+        }],
+        "stdout": ""
+    }, {
+        "event": "step_line",
+        "func_name": "main",
+        "globals": {},
+        "heap": {},
+        "line": 4,
+        "ordered_globals": [],
+        "stack_to_render": [{
+            "encoded_locals": {},
+            "frame_id": "0xFFF000BD0",
+            "func_name": "main",
+            "is_highlighted": true,
+            "is_parent": false,
+            "is_zombie": false,
+            "line": 3,
+            "ordered_varnames": [],
+            "parent_frame_id_list": [],
+            "unique_hash": "main_0xFFF000BD0"
+        }],
+        "stdout": ""
+    }, {
+        "event": "step_line",
+        "func_name": "main",
+        "globals": {},
+        "heap": {
+            "0x5C22040": ["C_ARRAY", "0x5C22040", ["C_DATA", "0x5C22040", "int", "<UNINITIALIZED>"], ["C_DATA", "0x5C22044", "int", "<UNINITIALIZED>"], ["C_DATA", "0x5C22048", "int", "<UNINITIALIZED>"]]
+        },
+        "line": 5,
+        "ordered_globals": [],
+        "stack_to_render": [{
+            "encoded_locals": {
+                "fruit": ["C_DATA", "0xFFF000BB8", "pointer", "<UNINITIALIZED>"],
+                "p": ["C_DATA", "0xFFF000BB0", "pointer", "<UNINITIALIZED>"],
+                "x": ["C_DATA", "0xFFF000BA8", "pointer", "0x5C22040"]
+            },
+            "frame_id": "0xFFF000BD0",
+            "func_name": "main",
+            "is_highlighted": true,
+            "is_parent": false,
+            "is_zombie": false,
+            "line": 5,
+            "ordered_varnames": ["x", "p", "fruit"],
+            "parent_frame_id_list": [],
+            "unique_hash": "main_0xFFF000BD0"
+        }],
+        "stdout": ""
+    }, {
+        "event": "step_line",
+        "func_name": "main",
+        "globals": {},
+        "heap": {
+            "0x5C22040": ["C_ARRAY", "0x5C22040", ["C_DATA", "0x5C22040", "int", "<UNINITIALIZED>"], ["C_DATA", "0x5C22044", "int", 20], ["C_DATA", "0x5C22048", "int", "<UNINITIALIZED>"]]
+        },
+        "line": 6,
+        "ordered_globals": [],
+        "stack_to_render": [{
+            "encoded_locals": {
+                "fruit": ["C_DATA", "0xFFF000BB8", "pointer", "<UNINITIALIZED>"],
+                "p": ["C_DATA", "0xFFF000BB0", "pointer", "<UNINITIALIZED>"],
+                "x": ["C_DATA", "0xFFF000BA8", "pointer", "0x5C22040"]
+            },
+            "frame_id": "0xFFF000BD0",
+            "func_name": "main",
+            "is_highlighted": true,
+            "is_parent": false,
+            "is_zombie": false,
+            "line": 6,
+            "ordered_varnames": ["x", "p", "fruit"],
+            "parent_frame_id_list": [],
+            "unique_hash": "main_0xFFF000BD0"
+        }],
+        "stdout": ""
+    }, {
+        "event": "step_line",
+        "func_name": "main",
+        "globals": {},
+        "heap": {
+            "0x5C22040": ["C_ARRAY", "0x5C22040", ["C_DATA", "0x5C22040", "int", "<UNINITIALIZED>"], ["C_DATA", "0x5C22044", "int", 20], ["C_DATA", "0x5C22048", "int", "<UNINITIALIZED>"]]
+        },
+        "line": 7,
+        "ordered_globals": [],
+        "stack_to_render": [{
+            "encoded_locals": {
+                "fruit": ["C_DATA", "0xFFF000BB8", "pointer", "<UNINITIALIZED>"],
+                "p": ["C_DATA", "0xFFF000BB0", "pointer", "0x5C22044"],
+                "x": ["C_DATA", "0xFFF000BA8", "pointer", "0x5C22040"]
+            },
+            "frame_id": "0xFFF000BD0",
+            "func_name": "main",
+            "is_highlighted": true,
+            "is_parent": false,
+            "is_zombie": false,
+            "line": 6,
+            "ordered_varnames": ["x", "p", "fruit"],
+            "parent_frame_id_list": [],
+            "unique_hash": "main_0xFFF000BD0"
+        }],
+        "stdout": ""
+    }, {
+        "event": "step_line",
+        "func_name": "main",
+        "globals": {},
+        "heap": {
+            "0x5C22040": ["C_ARRAY", "0x5C22040", ["C_DATA", "0x5C22040", "int", "<UNINITIALIZED>"], ["C_DATA", "0x5C22044", "int", 20], ["C_DATA", "0x5C22048", "int", "<UNINITIALIZED>"]],
+            "0x5C22090": ["C_ARRAY", "0x5C22090", ["C_DATA", "0x5C22090", "pointer", "<UNINITIALIZED>"], ["C_DATA", "0x5C22098", "pointer", "<UNINITIALIZED>"], ["C_DATA", "0x5C220A0", "pointer", "<UNINITIALIZED>"]]
+        },
+        "line": 8,
+        "ordered_globals": [],
+        "stack_to_render": [{
+            "encoded_locals": {
+                "fruit": ["C_DATA", "0xFFF000BB8", "pointer", "0x5C22090"],
+                "p": ["C_DATA", "0xFFF000BB0", "pointer", "0x5C22044"],
+                "x": ["C_DATA", "0xFFF000BA8", "pointer", "0x5C22040"]
+            },
+            "frame_id": "0xFFF000BD0",
+            "func_name": "main",
+            "is_highlighted": true,
+            "is_parent": false,
+            "is_zombie": false,
+            "line": 8,
+            "ordered_varnames": ["x", "p", "fruit"],
+            "parent_frame_id_list": [],
+            "unique_hash": "main_0xFFF000BD0"
+        }],
+        "stdout": ""
+    }, {
+        "event": "step_line",
+        "func_name": "main",
+        "globals": {},
+        "heap": {
+            "0x400995": ["C_ARRAY", "0x400995", ["C_DATA", "0x400995", "char", "b"], ["C_DATA", "0x400996", "char", "a"], ["C_DATA", "0x400997", "char", "n"], ["C_DATA", "0x400998", "char", "a"], ["C_DATA", "0x400999", "char", "n"], ["C_DATA", "0x40099A", "char", "a"], ["C_DATA", "0x40099B", "char", "s"], ["C_DATA", "0x40099C", "char", "\\0"]],
+            "0x5C22040": ["C_ARRAY", "0x5C22040", ["C_DATA", "0x5C22040", "int", "<UNINITIALIZED>"], ["C_DATA", "0x5C22044", "int", 20], ["C_DATA", "0x5C22048", "int", "<UNINITIALIZED>"]],
+            "0x5C22090": ["C_ARRAY", "0x5C22090", ["C_DATA", "0x5C22090", "pointer", "<UNINITIALIZED>"], ["C_DATA", "0x5C22098", "pointer", "0x400995"], ["C_DATA", "0x5C220A0", "pointer", "<UNINITIALIZED>"]]
+        },
+        "line": 9,
+        "ordered_globals": [],
+        "stack_to_render": [{
+            "encoded_locals": {
+                "fruit": ["C_DATA", "0xFFF000BB8", "pointer", "0x5C22090"],
+                "p": ["C_DATA", "0xFFF000BB0", "pointer", "0x5C22044"],
+                "x": ["C_DATA", "0xFFF000BA8", "pointer", "0x5C22040"]
+            },
+            "frame_id": "0xFFF000BD0",
+            "func_name": "main",
+            "is_highlighted": true,
+            "is_parent": false,
+            "is_zombie": false,
+            "line": 9,
+            "ordered_varnames": ["x", "p", "fruit"],
+            "parent_frame_id_list": [],
+            "unique_hash": "main_0xFFF000BD0"
+        }],
+        "stdout": ""
+    }, {
+        "event": "step_line",
+        "func_name": "main",
+        "globals": {},
+        "heap": {
+            "0x400995": ["C_ARRAY", "0x400995", ["C_DATA", "0x400995", "char", "b"], ["C_DATA", "0x400996", "char", "a"], ["C_DATA", "0x400997", "char", "n"], ["C_DATA", "0x400998", "char", "a"], ["C_DATA", "0x400999", "char", "n"], ["C_DATA", "0x40099A", "char", "a"], ["C_DATA", "0x40099B", "char", "s"], ["C_DATA", "0x40099C", "char", "\\0"]],
+            "0x5C22040": ["C_ARRAY", "0x5C22040", ["C_DATA", "0x5C22040", "int", "<UNINITIALIZED>"], ["C_DATA", "0x5C22044", "int", 20], ["C_DATA", "0x5C22048", "int", "<UNINITIALIZED>"]],
+            "0x5C22090": ["C_ARRAY", "0x5C22090", ["C_DATA", "0x5C22090", "pointer", "<UNINITIALIZED>"], ["C_DATA", "0x5C22098", "pointer", "0x400995"], ["C_DATA", "0x5C220A0", "pointer", "<UNINITIALIZED>"]]
+        },
+        "line": 10,
+        "ordered_globals": [],
+        "stack_to_render": [{
+            "encoded_locals": {
+                "fruit": ["C_DATA", "0xFFF000BB8", "pointer", "0x5C22090"],
+                "p": ["C_DATA", "0xFFF000BB0", "pointer", "0x5C22044"],
+                "x": ["C_DATA", "0xFFF000BA8", "pointer", "0x5C22040"]
+            },
+            "frame_id": "0xFFF000BD0",
+            "func_name": "main",
+            "is_highlighted": true,
+            "is_parent": false,
+            "is_zombie": false,
+            "line": 10,
+            "ordered_varnames": ["x", "p", "fruit"],
+            "parent_frame_id_list": [],
+            "unique_hash": "main_0xFFF000BD0"
+        }],
+        "stdout": "Yum 20 bananas"
+    }, {
+        "event": "step_line",
+        "func_name": "main",
+        "globals": {},
+        "heap": {
+            "0x400995": ["C_ARRAY", "0x400995", ["C_DATA", "0x400995", "char", "b"], ["C_DATA", "0x400996", "char", "a"], ["C_DATA", "0x400997", "char", "n"], ["C_DATA", "0x400998", "char", "a"], ["C_DATA", "0x400999", "char", "n"], ["C_DATA", "0x40099A", "char", "a"], ["C_DATA", "0x40099B", "char", "s"], ["C_DATA", "0x40099C", "char", "\\0"]],
+            "0x5C22040": ["C_ARRAY", "0x5C22040", ["C_DATA", "0x5C22040", "int", "<UNINITIALIZED>"], ["C_DATA", "0x5C22044", "int", 20], ["C_DATA", "0x5C22048", "int", "<UNINITIALIZED>"]],
+            "0x5C22090": ["C_ARRAY", "0x5C22090", ["C_DATA", "0x5C22090", "pointer", "<UNINITIALIZED>"], ["C_DATA", "0x5C22098", "pointer", "0x400995"], ["C_DATA", "0x5C220A0", "pointer", "<UNINITIALIZED>"]]
+        },
+        "line": 11,
+        "ordered_globals": [],
+        "stack_to_render": [{
+            "encoded_locals": {
+                "fruit": ["C_DATA", "0xFFF000BB8", "pointer", "0x5C22090"],
+                "p": ["C_DATA", "0xFFF000BB0", "pointer", "0x5C22044"],
+                "x": ["C_DATA", "0xFFF000BA8", "pointer", "0x5C22040"]
+            },
+            "frame_id": "0xFFF000BD0",
+            "func_name": "main",
+            "is_highlighted": true,
+            "is_parent": false,
+            "is_zombie": false,
+            "line": 10,
+            "ordered_varnames": ["x", "p", "fruit"],
+            "parent_frame_id_list": [],
+            "unique_hash": "main_0xFFF000BD0"
+        }],
+        "stdout": "Yum 20 bananas"
+    }, {
+        "event": "return",
+        "func_name": "main",
+        "globals": {},
+        "heap": {},
+        "line": 11,
+        "ordered_globals": [],
+        "stack_to_render": [{
+            "encoded_locals": {},
+            "frame_id": "0xFFF000BD0",
+            "func_name": "main",
+            "is_highlighted": true,
+            "is_parent": false,
+            "is_zombie": false,
+            "line": 11,
+            "ordered_varnames": [],
+            "parent_frame_id_list": [],
+            "unique_hash": "main_0xFFF000BD0"
+        }],
+        "stdout": "Yum 20 bananas"
+    }]
+});

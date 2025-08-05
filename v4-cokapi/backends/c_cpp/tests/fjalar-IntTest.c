@@ -37,8 +37,8 @@ int main()
   int uninit;
   int init = 5;
   int stackArray13[13] = {13,12,11,10,9,8,6,5,4,3}; // Only 10 elts. init
-  int* intArray = (int*)calloc(8, sizeof(int));
-  int* intArrayUninit = (int*)malloc(38*sizeof(int));
+  int* intArray = MC_NEW_ARRAY(int, 8);
+  int* intArrayUninit = MC_NEW_ARRAY(int, 38);
 
   //  printf("&globalX=%p\n", &globalX);
   //  printf("&&whatsUp=%p, &whatsUp=%p, whatsUp=%p\n", &ridiculous, &whatsUp, whatsUp);

@@ -1,0 +1,132 @@
+/* C/C++ 数据结构可视化样式 */
+.cArrayContainer {
+    margin: 10px 0;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fcfcfc;
+}
+
+.cArrayHeader {
+    font-family: monospace;
+    color: #666;
+    margin-bottom: 8px;
+    padding: 4px;
+    background: #f5f5f5;
+    border-radius: 3px;
+}
+
+.cArrayTable {
+    border-collapse: separate;
+    border-spacing: 2px;
+    margin: 5px 0;
+}
+
+.cArrayIndex {
+    font-size: 0.8em;
+    color: #999;
+    padding: 2px 4px;
+}
+
+.cArrayCell {
+    padding: 4px 8px;
+    border: 1px solid #e0e0e0;
+    background: white;
+    min-width: 30px;
+    text-align: center;
+}
+
+/* 数据类型样式 */
+.cData {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+.numberObj {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.charObj {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.pointerObj {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.uninitializedPointer {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+/* 动态提示样式 */
+.valueTooltip {
+    position: absolute;
+    z-index: 1000;
+    padding: 8px;
+    background: rgba(97, 97, 97, 0.9);
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    max-width: 250px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.valueTooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px 5px 0;
+    border-style: solid;
+    border-color: rgba(97, 97, 97, 0.9) transparent transparent;
+}
+
+/* 调试信息显示 */
+.debugInfo {
+    font-family: monospace;
+    font-size: 12px;
+    color: #666;
+    padding: 4px;
+    background: #f5f5f5;
+    border-left: 3px solid #2196f3;
+    margin: 4px 0;
+}
+
+.memoryAddress {
+    color: #0d47a1;
+}
+
+.typeInfo {
+    color: #1b5e20;
+}
+
+.sizeInfo {
+    color: #827717;
+}
+
+/* 动画效果 */
+@keyframes highlight {
+    0% { background-color: rgba(33, 150, 243, 0.2); }
+    100% { background-color: transparent; }
+}
+
+.highlightChange {
+    animation: highlight 1s ease-out;
+}
+
+/* 交互增强 */
+.cData:hover {
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.3);
+    cursor: pointer;
+}
+
+.hasNestedData {
+    border-left: 3px solid #2196f3;
+}

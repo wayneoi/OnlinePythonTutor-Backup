@@ -1,5 +1,7 @@
 #include <stdlib.h>
 
+void* malloc_typed(int tid, size_t n, const char* type_name);
+
 // cool, seems like debug info treats both params as pointers and not
 // array types
 int arrayParams(short short_array[5] /* incorrect bound */, char char_array[]) {
@@ -14,7 +16,7 @@ int main() {
   stack_shorts[7] = 7;
   stack_shorts[9] = 9;
 
-  char* heap_str = (char*)malloc(7);
+  char* heap_str = MC_NEW_ARRAY(char, 7);
   heap_str[0] = 'B';
   heap_str[1] = 'o';
   heap_str[2] = 'b';

@@ -9,33 +9,36 @@
 
 <head>
   <title>C++ Tutor - Visualize C++ code execution to learn C++ online</title>
-
   <meta http-equiv="Content-type" content="text/html; charset=UTF-8"/>
-
 <script type="text/javascript">
 window.optOverride = {}
 window.optOverride.frontendLang = 'cpp'; // hacky override before including visualize.bundle.js
 </script>
-
   <!-- let Webpack take care of everything. Use the [hash] feature to
        create unique filenames for releases:
        https://webpack.github.io/docs/long-term-caching.html -->
   <script type="text/javascript" src="build/visualize.bundle.js?32d9518d1a" charset="utf-8"></script>
-
-<!-- insert google-analytics.txt contents here -->
-  <!-- 添加 Ace Editor 主题 -->
-  <link rel="stylesheet" href="node_modules/ace-builds/css/ace.css">
-  
-  <!-- 加载 Geist Mono 字体 -->
-  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap"> -->
-  
   <!-- 更新脚本引用 -->
   <script src="node_modules/ace-builds/src-min/ace.js"></script>
-  <script src="node_modules/ace-builds/src-min/mode-c_cpp.js"></script>
+  <!-- <script src="node_modules/ace-builds/src-min/mode-c_cpp.js"></script> -->
   <script src="node_modules/ace-builds/src-min/ext-language_tools.js"></script>
+  <script src="js/lib/md5.min.js"></script>
   
   <!-- 引入 Nord 主题 -->
   <link rel="stylesheet" href="css/nord-theme.css">
+  <!-- 添加 Ace Editor 主题 -->
+  <link rel="stylesheet" href="node_modules/ace-builds/css/ace.css">
+  <link rel="stylesheet" href="css/pytutor-enhanced.css">
+  <!-- <link rel="stylesheet" href="css/pytutor-styles.css"> -->
+  <style>
+    /* 取消 Ace Editor 的滚动条，避免底部无法获取输入光标 */
+    .ace_scrollbar, .ace_scrollbar-v, .ace_scrollbar-h {
+      display: none !important;
+    }
+    .ace_editor {
+      overflow: hidden !important;
+    }
+  </style>
 </head>
 
 <body>
@@ -56,7 +59,7 @@ window.optOverride.frontendLang = 'cpp'; // hacky override before including visu
 </table>
 
 
-<div id="pyInputPane" style="margin-left: 0;">
+<div id="pyInputPane" style="margin-left: 0;"> 
 
 <div id="codeInputWarnings">编写代码使用
 
@@ -68,9 +71,20 @@ window.optOverride.frontendLang = 'cpp'; // hacky override before including visu
 
 <div id="someoneIsTypingDiv" style="color: #e93f34; font-weight: bold; display: none;">Someone is typing ...</div>
 
+<div style="margin: 10px 0;">
+  <label for="cppFileNameInput">文件名：</label>
+  <input type="text" id="cppFileNameInput" style="width: 300px;" placeholder="文件名"  />
+  <button id="saveCppFileBtn" type="button">保存</button>
+   <button id="clearLocalCache" type="button">清理缓存</button>
+</div>
+
 <div id="codeInputPane"></div> <!-- populate with Ace code editor instance -->
 <div id="frontendErrorOutput"></div>
 <div id="surveyPane"></div>
+<div>
+      <div>scanf/cin标准输入内容</div>
+      <textarea id="cppStdinInput" cols="40" rows="5" wrap="off" placeholder="输入给 cin/scanf 的内容"></textarea>
+</div>
 
 <p>
 <button id="executeBtn" class="bigBtn" type="button">可视化执行</button>
@@ -86,6 +100,51 @@ window.optOverride.frontendLang = 'cpp'; // hacky override before including visu
 <div id="pyOutputPane"></div>
 
 <div id="footer"></div>
+
+<script type="text/javascript">
+// 关联标准输入内容与文件名并存储到 localStorage
+function getStdinKey() {
+  var fname = document.getElementById('cppFileNameInput').value || '';
+  return 'cppStdinInput:' + fname;
+}
+
+function saveStdinToLocal() {
+  var key = getStdinKey();
+  var val = document.getElementById('cppStdinInput').value;
+  if (key) localStorage.setItem(key, val);
+}
+
+function loadStdinFromLocal() {
+  var key = getStdinKey();
+  var val = localStorage.getItem(key);
+  if (val !== null) {
+    document.getElementById('cppStdinInput').value = val;
+  } else {
+    document.getElementById('cppStdinInput').value = '';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // 页面加载时自动加载标准输入内容
+  loadStdinFromLocal();
+  // 文件名变动时自动加载对应输入内容
+  document.getElementById('cppFileNameInput').addEventListener('input', function() {
+    loadStdinFromLocal();
+  });
+  // 输入内容变动时自动保存
+  document.getElementById('cppStdinInput').addEventListener('input', function() {
+    saveStdinToLocal();
+  });
+  // 清理缓存按钮
+  var clearBtn = document.getElementById('clearLocalCache');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function() {
+      localStorage.clear();
+      location.reload();
+    });
+  }
+});
+</script>
 
 </body>
 </html>

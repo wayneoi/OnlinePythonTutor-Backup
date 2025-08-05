@@ -2,7 +2,7 @@
 
 int main()
 {
-  char* arr = (char*)malloc(10);
+  char* arr = MC_NEW_ARRAY(char, 10);
   delete arr; // mismatch
   int x = 42;
 }

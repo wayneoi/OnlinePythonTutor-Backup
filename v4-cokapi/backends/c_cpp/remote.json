@@ -1,0 +1,1224 @@
+{
+    "code": "#include <iostream>\n\nint main() {\n  int* x = new int[3];\n  x[1] = 20;\n  int* p = &x[1]; // pointer into middle\n  const char** fruit = new const char*[3];\n  fruit[1] = \"bananas\";\n  std::cout << \"Yum \" << *p << \" \" << fruit[1];\n  return 0;\n}",
+    "trace": [
+        {
+            "event": "step_line",
+            "func_name": "main",
+            "globals": {},
+            "heap": {},
+            "line": 3,
+            "ordered_globals": [],
+            "stack_to_render": [
+                {
+                    "encoded_locals": {
+                        "fruit": [
+                            "C_DATA",
+                            "0xFFF000BD0",
+                            "pointer",
+                            "<UNINITIALIZED>",
+                            {
+                                "bytes": 8,
+                                "target_type": "const char*"
+                            }
+                        ],
+                        "p": [
+                            "C_DATA",
+                            "0xFFF000BC8",
+                            "pointer",
+                            "<UNINITIALIZED>",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ],
+                        "x": [
+                            "C_DATA",
+                            "0xFFF000BC0",
+                            "pointer",
+                            "<UNINITIALIZED>",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ]
+                    },
+                    "frame_id": "0xFFF000BE0",
+                    "func_name": "main",
+                    "is_highlighted": true,
+                    "is_parent": false,
+                    "is_zombie": false,
+                    "line": 3,
+                    "ordered_varnames": [
+                        "x",
+                        "p",
+                        "fruit"
+                    ],
+                    "parent_frame_id_list": [],
+                    "unique_hash": "main_0xFFF000BE0"
+                }
+            ],
+            "stdout": ""
+        },
+        {
+            "event": "step_line",
+            "func_name": "main",
+            "globals": {},
+            "heap": {},
+            "line": 4,
+            "ordered_globals": [],
+            "stack_to_render": [
+                {
+                    "encoded_locals": {
+                        "fruit": [
+                            "C_DATA",
+                            "0xFFF000BD0",
+                            "pointer",
+                            "<UNINITIALIZED>",
+                            {
+                                "bytes": 8,
+                                "target_type": "const char*"
+                            }
+                        ],
+                        "p": [
+                            "C_DATA",
+                            "0xFFF000BC8",
+                            "pointer",
+                            "<UNINITIALIZED>",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ],
+                        "x": [
+                            "C_DATA",
+                            "0xFFF000BC0",
+                            "pointer",
+                            "<UNINITIALIZED>",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ]
+                    },
+                    "frame_id": "0xFFF000BE0",
+                    "func_name": "main",
+                    "is_highlighted": true,
+                    "is_parent": false,
+                    "is_zombie": false,
+                    "line": 3,
+                    "ordered_varnames": [
+                        "x",
+                        "p",
+                        "fruit"
+                    ],
+                    "parent_frame_id_list": [],
+                    "unique_hash": "main_0xFFF000BE0"
+                }
+            ],
+            "stdout": ""
+        },
+        {
+            "event": "step_line",
+            "func_name": "main",
+            "globals": {},
+            "heap": {
+                "0x5C7BC80": [
+                    "C_ARRAY",
+                    "0x5C7BC80",
+                    {
+                        "elt_bytes": 4,
+                        "heap_block": true,
+                        "oob_addr": "0x5C7BC8C"
+                    },
+                    [
+                        "C_DATA",
+                        "0x5C7BC80",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC84",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC88",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ]
+                ]
+            },
+            "line": 5,
+            "ordered_globals": [],
+            "stack_to_render": [
+                {
+                    "encoded_locals": {
+                        "fruit": [
+                            "C_DATA",
+                            "0xFFF000BD8",
+                            "pointer",
+                            "<UNINITIALIZED>",
+                            {
+                                "bytes": 8,
+                                "target_type": "const char*"
+                            }
+                        ],
+                        "p": [
+                            "C_DATA",
+                            "0xFFF000BD0",
+                            "pointer",
+                            "<UNINITIALIZED>",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ],
+                        "x": [
+                            "C_DATA",
+                            "0xFFF000BC8",
+                            "pointer",
+                            "0x5C7BC80",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ]
+                    },
+                    "frame_id": "0xFFF000BE0",
+                    "func_name": "main",
+                    "is_highlighted": true,
+                    "is_parent": false,
+                    "is_zombie": false,
+                    "line": 5,
+                    "ordered_varnames": [
+                        "x",
+                        "p",
+                        "fruit"
+                    ],
+                    "parent_frame_id_list": [],
+                    "unique_hash": "main_0xFFF000BE0"
+                }
+            ],
+            "stdout": ""
+        },
+        {
+            "event": "step_line",
+            "func_name": "main",
+            "globals": {},
+            "heap": {
+                "0x5C7BC80": [
+                    "C_ARRAY",
+                    "0x5C7BC80",
+                    {
+                        "elt_bytes": 4,
+                        "heap_block": true,
+                        "oob_addr": "0x5C7BC8C"
+                    },
+                    [
+                        "C_DATA",
+                        "0x5C7BC80",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC84",
+                        "int",
+                        20,
+                        {
+                            "bytes": 4,
+                            "hex": "00000014"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC88",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ]
+                ]
+            },
+            "line": 6,
+            "ordered_globals": [],
+            "stack_to_render": [
+                {
+                    "encoded_locals": {
+                        "fruit": [
+                            "C_DATA",
+                            "0xFFF000BD8",
+                            "pointer",
+                            "<UNINITIALIZED>",
+                            {
+                                "bytes": 8,
+                                "target_type": "const char*"
+                            }
+                        ],
+                        "p": [
+                            "C_DATA",
+                            "0xFFF000BD0",
+                            "pointer",
+                            "<UNINITIALIZED>",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ],
+                        "x": [
+                            "C_DATA",
+                            "0xFFF000BC8",
+                            "pointer",
+                            "0x5C7BC80",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ]
+                    },
+                    "frame_id": "0xFFF000BE0",
+                    "func_name": "main",
+                    "is_highlighted": true,
+                    "is_parent": false,
+                    "is_zombie": false,
+                    "line": 6,
+                    "ordered_varnames": [
+                        "x",
+                        "p",
+                        "fruit"
+                    ],
+                    "parent_frame_id_list": [],
+                    "unique_hash": "main_0xFFF000BE0"
+                }
+            ],
+            "stdout": ""
+        },
+        {
+            "event": "step_line",
+            "func_name": "main",
+            "globals": {},
+            "heap": {
+                "0x5C7BC80": [
+                    "C_ARRAY",
+                    "0x5C7BC80",
+                    {
+                        "elt_bytes": 4,
+                        "heap_block": true,
+                        "oob_addr": "0x5C7BC8C"
+                    },
+                    [
+                        "C_DATA",
+                        "0x5C7BC80",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC84",
+                        "int",
+                        20,
+                        {
+                            "bytes": 4,
+                            "hex": "00000014"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC88",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ]
+                ]
+            },
+            "line": 7,
+            "ordered_globals": [],
+            "stack_to_render": [
+                {
+                    "encoded_locals": {
+                        "fruit": [
+                            "C_DATA",
+                            "0xFFF000BD8",
+                            "pointer",
+                            "<UNINITIALIZED>",
+                            {
+                                "bytes": 8,
+                                "target_type": "const char*"
+                            }
+                        ],
+                        "p": [
+                            "C_DATA",
+                            "0xFFF000BD0",
+                            "pointer",
+                            "0x5C7BC84",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ],
+                        "x": [
+                            "C_DATA",
+                            "0xFFF000BC8",
+                            "pointer",
+                            "0x5C7BC80",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ]
+                    },
+                    "frame_id": "0xFFF000BE0",
+                    "func_name": "main",
+                    "is_highlighted": true,
+                    "is_parent": false,
+                    "is_zombie": false,
+                    "line": 6,
+                    "ordered_varnames": [
+                        "x",
+                        "p",
+                        "fruit"
+                    ],
+                    "parent_frame_id_list": [],
+                    "unique_hash": "main_0xFFF000BE0"
+                }
+            ],
+            "stdout": ""
+        },
+        {
+            "event": "step_line",
+            "func_name": "main",
+            "globals": {},
+            "heap": {
+                "0x5C7BC80": [
+                    "C_ARRAY",
+                    "0x5C7BC80",
+                    {
+                        "elt_bytes": 4,
+                        "heap_block": true,
+                        "oob_addr": "0x5C7BC8C"
+                    },
+                    [
+                        "C_DATA",
+                        "0x5C7BC80",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC84",
+                        "int",
+                        20,
+                        {
+                            "bytes": 4,
+                            "hex": "00000014"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC88",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ]
+                ],
+                "0x5C7BCD0": [
+                    "C_ARRAY",
+                    "0x5C7BCD0",
+                    {
+                        "elt_bytes": 8,
+                        "heap_block": true,
+                        "oob_addr": "0x5C7BCE8"
+                    },
+                    [
+                        "C_DATA",
+                        "0x5C7BCD0",
+                        "pointer",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BCD8",
+                        "pointer",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BCE0",
+                        "pointer",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ]
+                ]
+            },
+            "line": 8,
+            "ordered_globals": [],
+            "stack_to_render": [
+                {
+                    "encoded_locals": {
+                        "fruit": [
+                            "C_DATA",
+                            "0xFFF000BD8",
+                            "pointer",
+                            "0x5C7BCD0",
+                            {
+                                "bytes": 8,
+                                "target_type": "const char*"
+                            }
+                        ],
+                        "p": [
+                            "C_DATA",
+                            "0xFFF000BD0",
+                            "pointer",
+                            "0x5C7BC84",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ],
+                        "x": [
+                            "C_DATA",
+                            "0xFFF000BC8",
+                            "pointer",
+                            "0x5C7BC80",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ]
+                    },
+                    "frame_id": "0xFFF000BE0",
+                    "func_name": "main",
+                    "is_highlighted": true,
+                    "is_parent": false,
+                    "is_zombie": false,
+                    "line": 8,
+                    "ordered_varnames": [
+                        "x",
+                        "p",
+                        "fruit"
+                    ],
+                    "parent_frame_id_list": [],
+                    "unique_hash": "main_0xFFF000BE0"
+                }
+            ],
+            "stdout": ""
+        },
+        {
+            "event": "step_line",
+            "func_name": "main",
+            "globals": {},
+            "heap": {
+                "0x400944": {
+                    "kind": "readonly_memory",
+                    "val": [
+                        "C_ARRAY",
+                        "0x400944",
+                        {
+                            "elt_bytes": 1,
+                            "heap_block": true,
+                            "oob_addr": "0x40094C"
+                        },
+                        [
+                            "C_DATA",
+                            "0x400944",
+                            "char",
+                            "b",
+                            {
+                                "bytes": 1,
+                                "hex": "62"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400945",
+                            "char",
+                            "a",
+                            {
+                                "bytes": 1,
+                                "hex": "61"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400946",
+                            "char",
+                            "n",
+                            {
+                                "bytes": 1,
+                                "hex": "6E"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400947",
+                            "char",
+                            "a",
+                            {
+                                "bytes": 1,
+                                "hex": "61"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400948",
+                            "char",
+                            "n",
+                            {
+                                "bytes": 1,
+                                "hex": "6E"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400949",
+                            "char",
+                            "a",
+                            {
+                                "bytes": 1,
+                                "hex": "61"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x40094A",
+                            "char",
+                            "s",
+                            {
+                                "bytes": 1,
+                                "hex": "73"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x40094B",
+                            "char",
+                            "\\0",
+                            {
+                                "bytes": 1,
+                                "hex": "00"
+                            }
+                        ]
+                    ]
+                },
+                "0x5C7BC80": [
+                    "C_ARRAY",
+                    "0x5C7BC80",
+                    {
+                        "elt_bytes": 4,
+                        "heap_block": true,
+                        "oob_addr": "0x5C7BC8C"
+                    },
+                    [
+                        "C_DATA",
+                        "0x5C7BC80",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC84",
+                        "int",
+                        20,
+                        {
+                            "bytes": 4,
+                            "hex": "00000014"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC88",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ]
+                ],
+                "0x5C7BCD0": [
+                    "C_ARRAY",
+                    "0x5C7BCD0",
+                    {
+                        "elt_bytes": 8,
+                        "heap_block": true,
+                        "oob_addr": "0x5C7BCE8"
+                    },
+                    [
+                        "C_DATA",
+                        "0x5C7BCD0",
+                        "pointer",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BCD8",
+                        "pointer",
+                        "0x400944",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BCE0",
+                        "pointer",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ]
+                ]
+            },
+            "line": 9,
+            "ordered_globals": [],
+            "stack_to_render": [
+                {
+                    "encoded_locals": {
+                        "fruit": [
+                            "C_DATA",
+                            "0xFFF000BD8",
+                            "pointer",
+                            "0x5C7BCD0",
+                            {
+                                "bytes": 8,
+                                "target_type": "const char*"
+                            }
+                        ],
+                        "p": [
+                            "C_DATA",
+                            "0xFFF000BD0",
+                            "pointer",
+                            "0x5C7BC84",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ],
+                        "x": [
+                            "C_DATA",
+                            "0xFFF000BC8",
+                            "pointer",
+                            "0x5C7BC80",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ]
+                    },
+                    "frame_id": "0xFFF000BE0",
+                    "func_name": "main",
+                    "is_highlighted": true,
+                    "is_parent": false,
+                    "is_zombie": false,
+                    "line": 8,
+                    "ordered_varnames": [
+                        "x",
+                        "p",
+                        "fruit"
+                    ],
+                    "parent_frame_id_list": [],
+                    "unique_hash": "main_0xFFF000BE0"
+                }
+            ],
+            "stdout": ""
+        },
+        {
+            "event": "step_line",
+            "func_name": "main",
+            "globals": {},
+            "heap": {
+                "0x400944": {
+                    "kind": "readonly_memory",
+                    "val": [
+                        "C_ARRAY",
+                        "0x400944",
+                        {
+                            "elt_bytes": 1,
+                            "heap_block": true,
+                            "oob_addr": "0x40094C"
+                        },
+                        [
+                            "C_DATA",
+                            "0x400944",
+                            "char",
+                            "b",
+                            {
+                                "bytes": 1,
+                                "hex": "62"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400945",
+                            "char",
+                            "a",
+                            {
+                                "bytes": 1,
+                                "hex": "61"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400946",
+                            "char",
+                            "n",
+                            {
+                                "bytes": 1,
+                                "hex": "6E"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400947",
+                            "char",
+                            "a",
+                            {
+                                "bytes": 1,
+                                "hex": "61"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400948",
+                            "char",
+                            "n",
+                            {
+                                "bytes": 1,
+                                "hex": "6E"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400949",
+                            "char",
+                            "a",
+                            {
+                                "bytes": 1,
+                                "hex": "61"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x40094A",
+                            "char",
+                            "s",
+                            {
+                                "bytes": 1,
+                                "hex": "73"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x40094B",
+                            "char",
+                            "\\0",
+                            {
+                                "bytes": 1,
+                                "hex": "00"
+                            }
+                        ]
+                    ]
+                },
+                "0x5C7BC80": [
+                    "C_ARRAY",
+                    "0x5C7BC80",
+                    {
+                        "elt_bytes": 4,
+                        "heap_block": true,
+                        "oob_addr": "0x5C7BC8C"
+                    },
+                    [
+                        "C_DATA",
+                        "0x5C7BC80",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC84",
+                        "int",
+                        20,
+                        {
+                            "bytes": 4,
+                            "hex": "00000014"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC88",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ]
+                ],
+                "0x5C7BCD0": [
+                    "C_ARRAY",
+                    "0x5C7BCD0",
+                    {
+                        "elt_bytes": 8,
+                        "heap_block": true,
+                        "oob_addr": "0x5C7BCE8"
+                    },
+                    [
+                        "C_DATA",
+                        "0x5C7BCD0",
+                        "pointer",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BCD8",
+                        "pointer",
+                        "0x400944",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BCE0",
+                        "pointer",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ]
+                ]
+            },
+            "line": 10,
+            "ordered_globals": [],
+            "stack_to_render": [
+                {
+                    "encoded_locals": {
+                        "fruit": [
+                            "C_DATA",
+                            "0xFFF000BD8",
+                            "pointer",
+                            "0x5C7BCD0",
+                            {
+                                "bytes": 8,
+                                "target_type": "const char*"
+                            }
+                        ],
+                        "p": [
+                            "C_DATA",
+                            "0xFFF000BD0",
+                            "pointer",
+                            "0x5C7BC84",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ],
+                        "x": [
+                            "C_DATA",
+                            "0xFFF000BC8",
+                            "pointer",
+                            "0x5C7BC80",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ]
+                    },
+                    "frame_id": "0xFFF000BE0",
+                    "func_name": "main",
+                    "is_highlighted": true,
+                    "is_parent": false,
+                    "is_zombie": false,
+                    "line": 10,
+                    "ordered_varnames": [
+                        "x",
+                        "p",
+                        "fruit"
+                    ],
+                    "parent_frame_id_list": [],
+                    "unique_hash": "main_0xFFF000BE0"
+                }
+            ],
+            "stdout": "Yum 20 bananas"
+        },
+        {
+            "event": "return",
+            "func_name": "main",
+            "globals": {},
+            "heap": {
+                "0x400944": {
+                    "kind": "readonly_memory",
+                    "val": [
+                        "C_ARRAY",
+                        "0x400944",
+                        {
+                            "elt_bytes": 1,
+                            "heap_block": true,
+                            "oob_addr": "0x40094C"
+                        },
+                        [
+                            "C_DATA",
+                            "0x400944",
+                            "char",
+                            "b",
+                            {
+                                "bytes": 1,
+                                "hex": "62"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400945",
+                            "char",
+                            "a",
+                            {
+                                "bytes": 1,
+                                "hex": "61"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400946",
+                            "char",
+                            "n",
+                            {
+                                "bytes": 1,
+                                "hex": "6E"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400947",
+                            "char",
+                            "a",
+                            {
+                                "bytes": 1,
+                                "hex": "61"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400948",
+                            "char",
+                            "n",
+                            {
+                                "bytes": 1,
+                                "hex": "6E"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x400949",
+                            "char",
+                            "a",
+                            {
+                                "bytes": 1,
+                                "hex": "61"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x40094A",
+                            "char",
+                            "s",
+                            {
+                                "bytes": 1,
+                                "hex": "73"
+                            }
+                        ],
+                        [
+                            "C_DATA",
+                            "0x40094B",
+                            "char",
+                            "\\0",
+                            {
+                                "bytes": 1,
+                                "hex": "00"
+                            }
+                        ]
+                    ]
+                },
+                "0x5C7BC80": [
+                    "C_ARRAY",
+                    "0x5C7BC80",
+                    {
+                        "elt_bytes": 4,
+                        "heap_block": true,
+                        "oob_addr": "0x5C7BC8C"
+                    },
+                    [
+                        "C_DATA",
+                        "0x5C7BC80",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC84",
+                        "int",
+                        20,
+                        {
+                            "bytes": 4,
+                            "hex": "00000014"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BC88",
+                        "int",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 4
+                        }
+                    ]
+                ],
+                "0x5C7BCD0": [
+                    "C_ARRAY",
+                    "0x5C7BCD0",
+                    {
+                        "elt_bytes": 8,
+                        "heap_block": true,
+                        "oob_addr": "0x5C7BCE8"
+                    },
+                    [
+                        "C_DATA",
+                        "0x5C7BCD0",
+                        "pointer",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BCD8",
+                        "pointer",
+                        "0x400944",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ],
+                    [
+                        "C_DATA",
+                        "0x5C7BCE0",
+                        "pointer",
+                        "<UNINITIALIZED>",
+                        {
+                            "bytes": 8,
+                            "target_type": "const char"
+                        }
+                    ]
+                ]
+            },
+            "line": 11,
+            "ordered_globals": [],
+            "stack_to_render": [
+                {
+                    "encoded_locals": {
+                        "fruit": [
+                            "C_DATA",
+                            "0xFFF000BD8",
+                            "pointer",
+                            "0x5C7BCD0",
+                            {
+                                "bytes": 8,
+                                "target_type": "const char*"
+                            }
+                        ],
+                        "p": [
+                            "C_DATA",
+                            "0xFFF000BD0",
+                            "pointer",
+                            "0x5C7BC84",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ],
+                        "x": [
+                            "C_DATA",
+                            "0xFFF000BC8",
+                            "pointer",
+                            "0x5C7BC80",
+                            {
+                                "bytes": 8,
+                                "target_type": "int"
+                            }
+                        ]
+                    },
+                    "frame_id": "0xFFF000BE0",
+                    "func_name": "main",
+                    "is_highlighted": true,
+                    "is_parent": false,
+                    "is_zombie": false,
+                    "line": 11,
+                    "ordered_varnames": [
+                        "x",
+                        "p",
+                        "fruit"
+                    ],
+                    "parent_frame_id_list": [],
+                    "unique_hash": "main_0xFFF000BE0"
+                }
+            ],
+            "stdout": "Yum 20 bananas"
+        }
+    ]
+}

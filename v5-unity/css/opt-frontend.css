@@ -62,9 +62,9 @@ table#pyOutputPane {
 }
 
 #codeInputPane {
-  margin-top: 5px;
-  font-size: 12pt;
-  border: 1px solid #ddd;
+  width: 100% !important;
+  height: 400px !important;
+  margin-bottom: 10px;
 }
 
 #codeInputWarnings {
@@ -203,7 +203,7 @@ button.surveyBtnBig {
   height: 100%;
   width: 20%;
   z-index: 1;
-  background: url('data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB3aWR0aD0iMjBweCIgaGVpZ2h0PSIyMHB4IiB2aWV3Qm94PSIwIDAgMjAgMjAiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDIwIDIwIiB4bWw6c3BhY2U9InByZXNlcnZlIj48cG9seWdvbiBmaWxsPSIjRkZERjg4IiBwb2ludHM9IjEwLDAgMTMuMDksNi41ODMgMjAsNy42MzkgMTUsMTIuNzY0IDE2LjE4LDIwIDEwLDE2LjU4MyAzLjgyLDIwIDUsMTIuNzY0IDAsNy42MzkgNi45MSw2LjU4MyAiLz48L3N2Zz4=');
+  background: url('data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1zbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB3aWR0aD0iMjBweCIgaGVpZ2h0PSIyMHB4IiB2aWV3Qm94PSIwIDAgMjAgMjAiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDIwIDIwIiB4bWw6c3BhY2U9InByZXNlcnZlIj48cG9seWdvbiBmaWxsPSIjRkZERjg4IiBwb2ludHM9IjEwLDAgMTMuMDksNi41ODMgMjAsNy42MzkgMTUsMTIuNzY0IDE2LjE4LDIwIDEwLDE2LjU4MyAzLjgyLDIwIDUsMTIuNzY0IDAsNy42MzkgNi45MSw2LjU4MyAiLz48L3N2Zz4=');
   background-size: contain;
 }
 .star-rating input {
@@ -325,4 +325,36 @@ textarea.bubbleInputText {
 	-webkit-background-clip: padding-box;
 	-moz-background-clip: padding;
 	background-clip: padding-box;
+}
+
+.ace_editor {
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  background-color: #ECEFF4 !important;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.ace_gutter {
+  background: #E5E9F0 !important;
+  color: #4C566A !important;
+  border-right: 1px solid #D8DEE9 !important;
+}
+
+.ace_content {
+  background-color: #ECEFF4 !important;
+  color: #2E3440 !important;
+}
+
+.ace_cursor {
+  color: #5E81AC !important;
+}
+
+.ace_selection {
+  background: #D8DEE9 !important;
+}
+
+.ace_active-line {
+  background: #E5E9F0 !important;
 }

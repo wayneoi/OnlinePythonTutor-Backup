@@ -368,6 +368,12 @@ export class OptFrontendSharedSessions extends OptFrontend {
 
   constructor(params={}) {
     super(params);
+    //by wayneoi 隐藏 help queue 相关按钮
+    $("#requestHelpBtn").hide();
+    $("#publicHelpQueue").hide();
+  
+
+
     this.initTogetherJS();
     this.initABTest();
 
@@ -423,7 +429,7 @@ Get live help!
   </button>
 </div>
 `;
-
+ssDiv =''; //by wayne
     // 2019-04-01: eliminated this link and put up '(chat service may crash at any time)' warning
     //<a href="https://www.youtube.com/watch?v=oDY7ScMPtqI" target="_blank">How do I use this?</a>
 
@@ -432,7 +438,7 @@ Get live help!
   <div id="publicHelpQueue"></div>
 </div>
 `;
-
+togetherJsDiv = ``; //by wayne
     $("td#headerTdLeft").append(ssDiv);
     $("td#headerTdRight").append(togetherJsDiv);
     // shut down chat features on 2019-03-24 due to technical difficulties, reactivated on 2019-03-26:
@@ -465,8 +471,8 @@ Get live help!
     // send an HTTP request to the server when this.isIdle is true, to conserve
     // resources and get a more accurate indicator of who is active at
     // the moment
-    setInterval(this.getHelpQueue.bind(this), 5 * 1000);
-    setInterval(this.getNumObservers.bind(this), 5 * 1000);
+    //setInterval(this.getHelpQueue.bind(this), 5 * 1000);
+   //setInterval(this.getNumObservers.bind(this), 5 * 1000);
 
     // update this pretty frequently; doesn't require any ajax calls:
     setInterval(this.updateModerationPanel.bind(this), 2 * 1000);
@@ -605,6 +611,7 @@ Get live help!
   // timeout=0 default means no timeout; explicitly set it in ms to make
   // a shorter timeout
   getHelpQueue(timeout=0) {
+    return ;
     // VERY IMPORTANT: to avoid overloading the server, don't send these
     // requests when you're idle or disableSharedSessions is on.
     // this is important also for accurate logging, since if you're not
@@ -641,12 +648,12 @@ Get live help!
         if (this.wantsPublicHelp) {
           //$("#publicHelpQueue").html("ERROR: live chat is down or your firewall is blocking it. If you asked for help, something is wrong; stop this session and try again later. Do NOT email to ask when live chat will be back up.");
           // 2019-11-04: friendlier error msg
-          $("#publicHelpQueue").html("ERROR: live chat is down or your WiFi/firewall is blocking it. If you asked for help, something is wrong; stop this session and try again later.");
+          $("#publicHelpQueue").html("");
         } else {
           //$("#publicHelpQueue").empty(); // avoid showing stale results
           //$("#publicHelpQueue").html("ERROR: live chat is down or your firewall is blocking it. Do NOT email to ask when live chat will be back up."); // show error msg
           // 2019-11-04: friendlier error msg
-          $("#publicHelpQueue").html("(Live chat is down or your WiFi/firewall is blocking it. Try again later. There is NO technical support available.)"); // show error msg
+          $("#publicHelpQueue").html(""); // show error msg
         }
       },
       success: (resp) => {
@@ -1763,10 +1770,12 @@ Get live help!
       // "The longer you wait, the more likely that someone on this website will volunteer to help you. But there is no guarantee that someone will come help."
 
       this.updateModerationPanel(); // update it right away
-      this.getHelpQueue(); // update it right away
+      //this.getHelpQueue(); // update it right away
       this.getNumObservers(); // update it right away
       this.appendTogetherJsFooter();
+
       $("#requestHelpBtn").hide();
+      $("#publicHelpQueue").hide();
 
       // 2019-03-26: display a more prominent warning here:
       //this.chatbotPostMsg('This service is NOT being maintained, so it may crash any time and lose your code. It is available for free with no technical support. Do not contact the site owner to make any feature requests.');
@@ -1888,9 +1897,9 @@ Get live help!
       $("#codeInputWarnings").append(`
         <span id="snapshotHistory" style="font-size: 9pt; margin-left: 5px;">
           <span style="color: red; font-weight: bold;">UNDO</span>/restore old code:
-          <button id="prevSnapshot">&lt; Prev</button>
+          <button id="prevSnapshot">&lt; 上一步</button>
           <span id="curSnapIndex"/>/<span id="numTotalSnaps"/>
-          <button id="nextSnapshot">Next &gt;</button>
+          <button id="nextSnapshot">下一步 &gt;</button>
         </span>`);
 
       $("#snapshotHistory #prevSnapshot").click(() => {

@@ -1,6 +1,5 @@
 // Python Tutor: https://github.com/pgbovine/OnlinePythonTutor/
-// Copyright (C) Philip Guo (philip@pgbovine.net)
-// LICENSE: https://github.com/pgbovine/OnlinePythonTutor/blob/master/LICENSE.txt
+// Copyright (C) Philip Guo (philip@pgbovine/OnlinePythonTutor/blob/master/LICENSE.txt
 
 /* TODO:
 
@@ -38,12 +37,15 @@ require('./lib/jquery-ui-1.11.4/jquery-ui.css');
 require('./lib/jquery.ba-bbq.js'); // contains slight pgbovine modifications
 require('./lib/jquery.ba-dotimeout.min.js'); // for $.doTimeout
 require('../css/pytutor');
+// import './pytutor-enhanced.css';
 
 import {unsupportedFeaturesStr} from './footer-html';
 
 // for TypeScript
 declare var jQuery: JQueryStatic;
 declare var jsPlumb: any;
+// --- d3类型声明和全局引入 ---
+declare var d3: any;
 
 
 export var SVG_ARROW_POLYGON = '0,3 12,3 12,0 18,5 12,10 12,7 0,7';
@@ -128,8 +130,23 @@ export class ExecutionVisualizer {
                                       'member_descriptor', 'getset_descriptor', 'method_descriptor', 'wrapper_descriptor'];
 
   objInAlwaysNestTypes(obj) {
+    // 检查 obj 是否为 null 或 undefined
     if (!obj) return false;
-    assert($.isArray(obj));
+    
+    // 检查 obj 是否为数组
+    if (!$.isArray(obj)) return false;
+    
+    // 检查数组是否为空
+    if (obj.length === 0) return false;
+    
+    // 检查第一个元素是否存在
+    if (obj[0] === undefined) return false;
+
+    // 确保 alwaysNestTypes 存在且为数组
+    if (!this.params || !this.params.alwaysNestTypes || !$.isArray(this.params.alwaysNestTypes)) {
+      return false;
+    }
+
     if (this.params.alwaysNestTypes.indexOf(obj[0]) >= 0) {
       // is the type name in alwaysNestTypes?
       return true;
@@ -358,6 +375,16 @@ export class ExecutionVisualizer {
       customizeLink.trigger('click');
     }
   }, 100); // 小延迟确保 DOM 已完全加载
+
+    // --- Modern card style and enhanced C/C++ heap/stack/array/pointer rendering ---
+    // 1. Modern card style for heap/stack objects
+    // 2. Tooltip on hover for memory details
+    // 3. Click to highlight all related references
+    // 4. Special mark for uninitialized memory and readonly storage
+    // 5. Responsive to showMemoryDetails
+
+    // --- 新增: 卡片风格和交互增强 ---
+    this.enhanceCardStyleAndInteractivity();
   }
 
   /* API for adding a hook, created by David Pritchard
@@ -1167,6 +1194,51 @@ export class ExecutionVisualizer {
     return (PO <= LO) && (LO < (PO + H - 25));
   }
 
+  // --- Modern card style and enhanced C/C++ heap/stack/array/pointer rendering ---
+  // 1. Modern card style for heap/stack objects
+  // 2. Tooltip on hover for memory details
+  // 3. Click to highlight all related references
+  // 4. Special mark for uninitialized memory and readonly storage
+  // 5. Responsive to showMemoryDetails
+
+  // --- 新增: 卡片风格和交互增强 ---
+  private enhanceCardStyleAndInteractivity() {
+    // 卡片风格
+    this.domRoot.addClass('enhanced-cpp-cards');
+    // 事件委托：鼠标悬停显示tooltip
+    this.domRoot.on('mouseenter', '.heapObject, .stackFrameValue', function(e) {
+      const $el = $(this);
+      const tooltip = $el.data('tooltip');
+      if (tooltip) {
+        const $tip = $('<div class="enhanced-tooltip"></div>').html(tooltip).appendTo('body');
+        $el.data('tipEl', $tip);
+        $tip.css({left: e.pageX + 12, top: e.pageY + 8});
+      }
+    });
+    this.domRoot.on('mousemove', '.heapObject, .stackFrameValue', function(e) {
+      const $el = $(this);
+      const $tip = $el.data('tipEl');
+      if ($tip) $tip.css({left: e.pageX + 12, top: e.pageY + 8});
+    });
+    this.domRoot.on('mouseleave', '.heapObject, .stackFrameValue', function() {
+      const $el = $(this);
+      const $tip = $el.data('tipEl');
+      if ($tip) $tip.remove();
+      $el.removeData('tipEl');
+    });
+    // 点击高亮所有相关引用
+    this.domRoot.on('click', '.heapObject, .stackFrameValue', function() {
+      const ref = $(this).data('ref');
+      $('.highlight-ref').removeClass('highlight-ref');
+      if (ref) {
+        $(`[data-ref='${ref}']`).addClass('highlight-ref');
+      }
+    });
+
+        
+
+  }
+
 } // END class ExecutionVisualizer
 
 
@@ -1207,8 +1279,6 @@ class DataVisualizer {
   // with variable/field name as keys (and true as values)
   hideVarsSet: any;
   hideFieldsSet: any;
-
-  // temporary -- what has been hidden during a particular call to
   // renderDataStructures? (reset during every call to renderDataStructures)
   varsHidden: string[];
   fieldsHidden: string[];
@@ -1216,6 +1286,9 @@ class DataVisualizer {
   static GLOBAL_PREFIX = 'global';
   static UNNAMED_PREFIX = '<unnamed>';
 
+  private prevValues: Map<string, any>;
+  showMemoryDetails: boolean; // 控制是否显示内存地址和字节信息
+  
   constructor(owner, domRoot, domRootD3) {
     this.owner = owner;
     this.params = this.owner.params;
@@ -1228,6 +1301,24 @@ class DataVisualizer {
     this.hideFieldsSet = null;
 
     this.draggedHeapObjectCSS = d3.map(); // see above for description
+
+    // --- 新增: 插入checkbox控件 ---
+    const memoryToggleHTML = `
+      <div id="memoryDetailsToggle" style="margin-bottom:6px;">
+        <label style="cursor:pointer;">
+          <input type="checkbox" id="showMemoryDetailsCheckbox" style="vertical-align:middle; margin-right:4px;"/>
+          显示内存地址和字节信息
+        </label>
+      </div>
+    `;
+    this.domRoot.append(memoryToggleHTML); //插入checkbox控件
+    // 初始化状态为未选择
+    this.showMemoryDetails = false;
+    // 监听checkbox变化
+    this.domRoot.find('#showMemoryDetailsCheckbox').on('change', (e) => {
+      this.showMemoryDetails = !e.target.checked;// 更新状态
+      this.renderDataStructures(this.owner.curInstr);
+    });
 
     var codeVizHTML = `
       <div id="selectiveHideStatus"></div>
@@ -1260,9 +1351,9 @@ class DataVisualizer {
 
 
     this.jsPlumbInstance = jsPlumb.getInstance({
-      Endpoint: ["Dot", {radius:3}],
+      Endpoint: ["Dot", {radius:3}], 
       EndpointStyles: [{fillStyle: connectorBaseColor}, {fillstyle: null} /* make right endpoint invisible */],
-      Anchors: ["RightMiddle", "LeftMiddle"],
+      //Anchors: ["RightMiddle", "LeftMiddle"], // right endpoint is the target, left endpoint is the source , 
       PaintStyle: {lineWidth:1, strokeStyle: connectorBaseColor},
 
       // From: http://jsplumb.github.io/jsplumb/home.html#container
@@ -1276,9 +1367,33 @@ class DataVisualizer {
       // we're still on a super-old jsPlumb-1.3.10 in lib/
       // https://docs.jsplumbtoolkit.com/toolkit/current/articles/connectors.html
       Connector: [ "StateMachine" ],
-      Overlays: [[ "Arrow", { length: 10, width:7, foldback:0.55, location:1 /* 1 = display at target */ }]],
+      Overlays: [[ "Arrow", { length: 10, width:4, foldback:0.55, location:1 /* 1 = display at target */ }]],
       EndpointHoverStyles: [{fillStyle: connectorHighlightColor}, {fillstyle: null} /* make right endpoint invisible */],
       HoverPaintStyle: {lineWidth: 1, strokeStyle: connectorHighlightColor},
+    });
+
+    this.prevValues = new Map();
+    
+    // 初始化动态提示
+    this.initializeTooltips();
+
+    // 在DataVisualizer构造函数或jsPlumbInstance初始化后添加：
+    this.jsPlumbInstance.importDefaults({
+      PaintStyle: { lineWidth: 2, strokeStyle: "#1e90ff" }, // 蓝色箭头
+      HoverPaintStyle: { lineWidth: 3, strokeStyle: "#e93f34" }, // 悬停高亮
+      Endpoint: ["Dot", { radius: 3 }],
+      Connector: [ "Bezier", { curviness: 60 } ],
+      Overlays: [
+        [ "Arrow", { width: 6, length: 14, location: 1, foldback: 0.7, paintStyle: { fill: "#1e90ff" } } ]
+      ]
+    });
+    
+    // 添加键盘快捷键支持
+    $(document).on('keydown', (e) => {
+      // Ctrl + Alt + D 切换调试信息显示
+      if (e.ctrlKey && e.altKey && e.key === 'd') {
+        this.domRoot.toggleClass('showDebugInfo');
+      }
     });
   }
 
@@ -1346,9 +1461,9 @@ class DataVisualizer {
       if (label === 'Global frame') {
         return 'Global variables全局变量';
       } else if (label === 'Frames') {
-        return 'Stack栈变量';
+        return 'Stack栈区变量';
       } else if (label === 'Objects') {
-        return 'Heap堆变量';
+        return 'Heap堆区变量';
       }
     }
 
@@ -1426,37 +1541,74 @@ class DataVisualizer {
     // copied from recurseIntoCStructArray ...
     // see inside comments for an optimization opportunity:
     function traverseCStructArray(val) {
-      if (val[0] == 'C_STRUCT') {
-        // grab all field names and add to allFieldnames
+      // 早期验证 - 确保 val 是有效值且为数组
+      if (!val || !Array.isArray(val) || val.length === 0) {
+        return;
+      }
+
+      // 验证数组第一个元素是有效的类型
+      const validTypes = ['C_STRUCT', 'C_ARRAY', 'C_MULTIDIMENSIONAL_ARRAY'];
+      if (!validTypes.includes(val[0])) {
+        return;
+      }
+
+      if (val[0] === 'C_STRUCT') {
+        // 确保有足够的头部字段
+        if (val.length < 3) return;
+
         let structName = val[2] ? val[2] : DataVisualizer.UNNAMED_PREFIX;
 
         $.each(val, function(ind, kvPair) {
-          if (ind < 3) return; // these have 3 header fields
-          let fieldName = kvPair[0];
-          let encodedFieldname = structName + ':' + fieldName;
-          if (allFieldnames.indexOf(encodedFieldname) < 0) { // don't insert duplicates
-            allFieldnames.push(encodedFieldname);
+          if (ind < 3) return; // 这些是头部字段
+
+          // 处理 kvPair 作为对象的情况
+          if (kvPair && typeof kvPair === 'object' && kvPair.type_hint === 'struct') {
+            let fieldName = kvPair.field_name || kvPair[0];
+            if (!fieldName) return; // 确保字段名存在
+            
+            let encodedFieldname = structName + ':' + fieldName;
+            if (allFieldnames.indexOf(encodedFieldname) < 0) { // 不插入重复项
+              allFieldnames.push(encodedFieldname);
+            }
+            
+            if (kvPair.value) {
+              traverseCStructArray(kvPair.value);
+            }
+          }
+          // 原来的数组处理逻辑
+          else if (Array.isArray(kvPair) && kvPair.length >= 2) {
+            let fieldName = kvPair[0];
+            if (!fieldName) return;
+            
+            let encodedFieldname = structName + ':' + fieldName;
+            if (allFieldnames.indexOf(encodedFieldname) < 0) {
+              allFieldnames.push(encodedFieldname);
+            }
+            
+            traverseCStructArray(kvPair[1]);
           }
         });
       }
-
-      // recurse inside if necessary ...
-      //
-      // TODO: if you really want to make this more efficient
-      // (especially for huge arrays), you can simply traverse into the
-      // *first element* of C_ARRAY or C_MULTIDIMENSIONAL_ARRAY since
-      // they're supposedly homogeneous, so the type of the first element
-      // should be identical to the type of all other elements :)
-      // (just beware of the case of empty (zero-sized) arrays, though)
-      if (val[0] === 'C_ARRAY') {
+      else if (val[0] === 'C_ARRAY') {
         $.each(val, function(ind, elt) {
-          if (ind < 2) return; // these have 2 header fields
-          traverseCStructArray(elt);
+          if (ind < 2) return; // 这些是头部字段
+          if (elt !== undefined) {
+            traverseCStructArray(elt);
+          }
         });
-      } else if (val[0] === 'C_MULTIDIMENSIONAL_ARRAY' || val[0] === 'C_STRUCT') {
+      }
+      else if (val[0] === 'C_MULTIDIMENSIONAL_ARRAY') {
         $.each(val, function(ind, kvPair) {
-          if (ind < 3) return; // these have 3 header fields
-          traverseCStructArray(kvPair[1]);
+          if (ind < 3) return; // 这些是头部字段
+          
+          // 处理 kvPair 作为对象的情况 
+          if (kvPair && typeof kvPair === 'object' && kvPair.type_hint === 'struct') {
+            traverseCStructArray(kvPair.value);
+          }
+          // 原来的数组处理逻辑
+          else if (Array.isArray(kvPair) && kvPair.length >= 2) {
+            traverseCStructArray(kvPair[1]);
+          }
         });
       }
     }
@@ -1468,7 +1620,7 @@ class DataVisualizer {
       // expected format from ../pg_encoder.py
       // #   * instance - ['INSTANCE', class name, [attr1, value1], [attr2, value2], ..., [attrN, valueN]]
       // #   * instance with non-trivial __str__ defined - ['INSTANCE_PPRINT', class name, <__str__ value>, [attr1, value1], [attr2, value2], ..., [attrN, valueN]]
-      // #   * class    - ['CLASS', class name, [list of superclass names], [attr1, value1], [attr2, value2], ..., [attrN, valueN]]
+      // #   * class    - ['CLASS', class name, [list of superclass names], [attr1, value1], [attr2, value1], ..., [attrN, valueN]]
       //
       // also for javascript, JS_FUNCTION objects may have funcProperties
       //
@@ -1479,7 +1631,7 @@ class DataVisualizer {
         let typ = obj[0];
         if (typ == 'INSTANCE' || typ == 'INSTANCE_PPRINT' || typ == 'CLASS') {
           let [className, headerLength] = DataVisualizer.getClassInstanceMetadata(obj);
-          for (let i = headerLength; i < obj.length; i++) {
+          for (let i = headerLength; i < obj.length; i++) { //
             let fieldName = obj[i][0];
             // className can possibly be null ...
             let encodedFieldname = className ? className + ':' + fieldName : fieldName;
@@ -1615,8 +1767,8 @@ class DataVisualizer {
         var heapObj = curEntry.heap[id];
 
         if (myViz.isCppMode()) {
-          // soften this assumption since C-style pointers might not point
-          // to the heap; they can point to any piece of data!
+          // TODO: why might this be undefined?!? because the object
+          // disappeared from the heap all of a sudden?!?
           if (!heapObj) {
             return;
           }
@@ -1814,15 +1966,6 @@ class DataVisualizer {
             else {
               // otherwise push to curLayout as a new row
               //
-              // TODO: this might not always look the best, since we might
-              // sometimes want to splice newRow in the MIDDLE of
-              // curLayout. Consider this example:
-              //
-              // x = [1,2,3]
-              // y = [4,5,6]
-              // x = [7,8,9]
-              //
-              // when the third line is executed, the arrows for x and y
               // will be crossed (ugly!) since the new row for the [7,8,9]
               // object is pushed to the end (bottom) of curLayout. The
               // proper behavior is to push it to the beginning of
@@ -1882,6 +2025,7 @@ class DataVisualizer {
       $.each(curEntry.ordered_globals, function(i, varname) {
         if (myViz.inHideVarsSet(DataVisualizer.GLOBAL_PREFIX, varname)) {
           //console.log('precompute HIDING', DataVisualizer.GLOBAL_PREFIX, varname);
+          myViz.varsHidden.push(DataVisualizer.GLOBAL_PREFIX + ':' + varname);
           return; // get out!
         }
 
@@ -2015,7 +2159,7 @@ class DataVisualizer {
       return true;
     }
 
-    if (typeof obj == "object") {
+    if (typeof obj == "object") { // objects are compound types
       // kludgy
       return (obj[0] == 'IMPORTED_FAUX_PRIMITIVE' ||
               obj[0] == 'SPECIAL_FLOAT' || obj[0] == 'JS_SPECIAL_VAL' ||
@@ -2285,11 +2429,12 @@ class DataVisualizer {
 
     var globalVarTableCells = globalVarTable
       .selectAll('td.stackFrameVar,td.stackFrameValue')
-      .data(function(d, i){return [d, d];}) /* map varname down both columns */
+      .data(function(d, i){return [d, d] /* map varname down both columns */;}) /* map varname down both columns */
 
     globalVarTableCells.enter()
       .append('td')
       .attr('class', function(d, i) {return (i == 0) ? 'stackFrameVar' : 'stackFrameValue';});
+      
 
     // remember that the enter selection is added to the update
     // selection so that we can process it later ...
@@ -2358,7 +2503,7 @@ class DataVisualizer {
       .each(function(d, idx) {
         $(this).empty(); // crucial for garbage collecting jsPlumb connectors!
       })
-      .remove();
+     .remove();
 
     globalVarTable.exit()
       .each(function(d, i) {
@@ -2373,12 +2518,6 @@ class DataVisualizer {
 
 
     // for aesthetics, hide globals if there aren't any globals to display
-    if (curEntry.ordered_globals.length == 0) {
-      this.domRoot.find('#' + globalsID).hide();
-    }
-    else {
-      this.domRoot.find('#' + globalsID).show();
-    }
 
 
     // holy cow, the d3 code for stack rendering is ABSOLUTELY NUTS!
@@ -2705,7 +2844,6 @@ class DataVisualizer {
             dstHeapObject.css('margin-left', '+=' + delta);
 
             //console.log(srcRowID, 'nudged', dstRowID, 'by', delta);
-
             var cur_nudgee_set = nudger_to_nudged_rows[srcRowID];
             if (cur_nudgee_set === undefined) {
               cur_nudgee_set = d3.map();
@@ -2787,13 +2925,42 @@ class DataVisualizer {
       // the boat on my existing (battle-tested) code
       if (myViz.isCppMode()) {
         if (myViz.domRoot.find('#' + valueID).length) {
-          myViz.jsPlumbInstance.connect({source: varID, target: valueID, scope: 'varValuePointer'});
+          myViz.jsPlumbInstance.connect({
+            source: varID,
+            target: valueID,
+            scope: 'varValuePointer',
+            paintStyle: { strokeStyle: "#1e90ff", lineWidth: 2, opacity: 0.2 },
+            overlays: [
+              [ "Arrow", { width: 12, length: 14, location: 1, foldback: 0.7, paintStyle: { fill: "#1e90ff" } } ]
+            ]
+          });
+          // 然后用jQuery动画渐变opacity到1
+          setTimeout(() => {
+            myViz.jsPlumbInstance.select({source: varID, target: valueID}).each(function(c) {
+              $(c.canvas).animate({opacity: 1}, 300);
+            });
+          }, 10); 
         } else {
           // pointer isn't pointing to anything valid; put a poo emoji here
           myViz.domRoot.find('#' + varID).html('\uD83D\uDCA9' /* pile of poo emoji */);
         }
       } else {
-        myViz.jsPlumbInstance.connect({source: varID, target: valueID, scope: 'varValuePointer'});
+            myViz.jsPlumbInstance.connect({
+            source: varID,
+            target: valueID,
+            scope: 'varValuePointer',
+            paintStyle: { strokeStyle: "#1e90ff", lineWidth: 2, opacity: 0.2 },
+            overlays: [
+              [ "Arrow", { width: 12, length: 14, location: 1, foldback: 0.7, paintStyle: { fill: "#1e90ff" } } ]
+            ]
+          });
+          // 然后用jQuery动画渐变opacity到1
+          setTimeout(() => {
+            myViz.jsPlumbInstance.select({source: varID, target: valueID}).each(function(c) {
+              $(c.canvas).animate({opacity: 1}, 300);
+            });
+          }, 10); 
+        //console.log('connect', varID, valueID);
       }
     }
 
@@ -2913,21 +3080,6 @@ class DataVisualizer {
     myViz.domRoot.find('.heapObject').each((i, e) => {
       // very subtle: if this is a .heapObject that's *nested* within
       // another one, then don't make it draggable, since it's weird to
-      // be able to drag a nested object inside of its parent object; in
-      // other words, we want to drag only .toplevelHeapObject, but it's
-      // cleaner to make the .heapObject element draggable and not the
-      // .toplevelHeapObject element
-      //
-      // note that this code may break if we're nesting an entire
-      // ExecutionVisualizer instance inside the .heapObject of another
-      // ExecutionVisualizer so that every .heapObject in the inner one is
-      // actually in the outer one, but i don't see who would actually do that!
-      if ($(e).parents('.heapObject').length) {
-        return;
-      }
-
-      // set a custom position if one was found in draggedHeapObjectCSS ...
-      // make sure to do this after applying rightwardNudgeHack so that
       // we override the positions of any nudged elements with ones from
       // draggedHeapObjectCSS
       let savedDraggedCSS = myViz.draggedHeapObjectCSS.get($(e).attr('id'));
@@ -3010,6 +3162,7 @@ class DataVisualizer {
     }
 
     myViz.owner.try_hook("end_renderDataStructures", {myViz:myViz.owner /* tricky! use owner to be safe */});
+    myViz.jsPlumbManager.connectionEndpointIDs.forEach(renderVarValueConnector);
   }
 
   // rendering functions, which all take a d3 dom element to anchor the
@@ -3065,8 +3218,8 @@ class DataVisualizer {
         }
 
         var isValidPtr = ((typeName === 'pointer') &&
-                          (obj[3] !== '<UNINITIALIZED>') &&
-                          (obj[3] !== '<UNALLOCATED>'));
+                          (obj[3] !== '<UNINITIALIZED>' &&
+                          (obj[3] !== '<UNALLOCATED>')));
 
         var addr = obj[1];
         var leader = '';
@@ -3168,19 +3321,99 @@ class DataVisualizer {
     }
   }
 
-  renderNestedObject(obj, stepNum: number, d3DomElement) {
+  renderNestedObject(obj: any, stepNum: number, d3DomElement: JQuery): void {  
     if (this.isPrimitiveType(obj)) {
       this.renderPrimitiveObject(obj, stepNum, d3DomElement);
     }
-    else {
-      if (obj[0] === 'REF') {
-        // obj is a ["REF", <int>] so dereference the 'pointer' to render that object
+    else if (Array.isArray(obj)) {
+      // 处理数组形式的引用或C数据结构
+      if (obj[0] === "REF") {
         this.renderCompoundObject(getRefID(obj), stepNum, d3DomElement, false);
-      } else {
-        assert(obj[0] === 'C_STRUCT' || obj[0] === 'C_ARRAY' || obj[0] === 'C_MULTIDIMENSIONAL_ARRAY');
+      }
+      else if (obj[0] === "C_ARRAY") {
         this.renderCStructArray(obj, stepNum, d3DomElement);
       }
+      else if (obj[0] === "C_DATA") {
+        // 处理 C_DATA 类型
+        this.renderCData(obj, stepNum, d3DomElement);
+      }
+      else {
+        // 其他数组类型的处理
+        this.renderPrimitiveObject(obj, stepNum, d3DomElement);
+      }
     }
+    else if (obj && typeof obj === 'object') {
+      // 处理对象类型
+      if (obj.kind === 'readonly_memory') {
+        // 处理只读内存区域
+        this.renderNestedObject(obj.val, stepNum, d3DomElement);
+      }
+      else if ('target_type' in obj) {
+        if (obj.target_type === 'REF') {
+          this.renderCompoundObject(getRefID(obj), stepNum, d3DomElement, false);
+        } 
+        else if (['C_STRUCT', 'C_ARRAY', 'C_MULTIDIMENSIONAL_ARRAY'].includes(obj.target_type)) {
+          this.renderCStructArray(obj, stepNum, d3DomElement);
+        }
+      }
+      else {
+        this.renderPrimitiveObject(obj, stepNum, d3DomElement);
+      }
+    }
+    else {
+      this.renderPrimitiveObject(obj, stepNum, d3DomElement);
+    }
+  }
+
+  // 新增：渲染 C_DATA 类型数据
+  private renderCData(obj: any[], stepNum: number, d3DomElement: JQuery): void {
+    // C_DATA 格式: ["C_DATA", addr, type, value, metadata]
+    const [_, addr, type, value, metadata] = obj;
+    
+    let displayValue = value;
+    if (value === "<UNINITIALIZED>") {
+      displayValue = '<未初始化>';
+    } else if (type === "char" && metadata && metadata.hex) {
+      // 显示字符的值和十六进制表示
+      displayValue = `'${value}' (0x${metadata.hex})`;
+    }
+
+    // 添加元数据提示
+    let tooltip = '';
+    if (metadata && this.showMemoryDetails ) {
+      if (metadata.bytes) tooltip += ` ${metadata.bytes}bytes\n`;
+      if ( metadata.target_type) tooltip += `目标类型: ${metadata.target_type}\n`;
+    }
+    
+    const classNames = ['cData'];
+    if (type === 'pointer') classNames.push('pointerObj');
+    else if (['int', 'char', 'float', 'double'].includes(type)) classNames.push('numberObj');
+
+    // --- 新增：内存细节显示 ---
+    let memoryDetailsHtml = '';
+    if (this.showMemoryDetails) {
+      memoryDetailsHtml += `<span class='cdata-addr'>@${addr}</span>`;
+      if (metadata && metadata.bytes !== undefined) {
+        memoryDetailsHtml += ` <span class='cdata-bytes'>${metadata.bytes}B</span>`;
+      }
+    }
+
+    const element = $('<span>')
+      .addClass(classNames.join(' '))
+      .attr('data-addr', addr)
+      .attr('title', tooltip)
+      .html(memoryDetailsHtml + ' ' + displayValue);
+      
+    d3DomElement.append(element);
+
+    // 添加调试信息
+    this.showDebugInfo(d3DomElement, { metadata });
+    
+    // 高亮值变化
+    if (this.prevValues && this.prevValues.get(addr) !== undefined && this.prevValues.get(addr) !== value) {
+      element.addClass('highlightChange');
+    }
+    if (this.prevValues) this.prevValues.set(addr, value);
   }
 
   renderCompoundObject(objID, stepNum: number, d3DomElement, isTopLevel) {
@@ -3503,6 +3736,8 @@ class DataVisualizer {
 
   // special-case kludge for C/C++
   renderCStructArray(obj, stepNum, d3DomElement) {
+
+   
     var myViz = this; // to prevent confusion of 'this' inside of nested functions
 
     if (obj[0] == 'C_STRUCT') {
@@ -3511,43 +3746,40 @@ class DataVisualizer {
       var typename = obj[2];
 
       var leader = '';
+      // --- 新增：内存细节显示 ---
+      let memoryDetailsHtml = '';
+      if (this.showMemoryDetails) {
+        memoryDetailsHtml += `<span class='cdata-addr'>@${addr}</span> `;
+      }
       if (myViz.params.lang === 'cpp') {
-        // call it 'object' instead of 'struct'
-        d3DomElement.append('<div class="typeLabel">' + leader + 'object ' + typename + '</div>');
+        d3DomElement.append(`<div class=\"typeLabel\">${memoryDetailsHtml}${leader}object ${typename}</div>`);
       } else {
-        d3DomElement.append('<div class="typeLabel">' + leader + 'struct ' + typename + '</div>');
+        d3DomElement.append(`<div class=\"typeLabel\">${memoryDetailsHtml}${leader}struct ${typename}</div>`);
       }
 
       if (obj.length > 3) {
-        d3DomElement.append('<table class="instTbl"></table>');
-
+        d3DomElement.append('<table class=\"instTbl\"></table>');
         var tbl = d3DomElement.children('table');
-
         let structName = obj[2] ? obj[2] : DataVisualizer.UNNAMED_PREFIX;
         $.each(obj, function(ind, kvPair) {
           if (ind < 3) return; // skip header tags
-
           let fieldName = kvPair[0];
           if (myViz.inHideFieldsSet(structName, fieldName)) {
             console.log('render HIDING', structName, fieldName);
             myViz.fieldsHidden.push(structName + ':' + fieldName);
             return; // get out!
           }
-
-          tbl.append('<tr class="instEntry"><td class="instKey"></td><td class="instVal"></td></tr>');
-
+          tbl.append('<tr class=\"instEntry\"><td class=\"instKey\"></td><td class=\"instVal\"></td></tr>');
           var newRow = tbl.find('tr:last');
           var keyTd = newRow.find('td:first');
           var valTd = newRow.find('td:last');
-
-          // the keys should always be strings, so render them directly (and without quotes):
-          // (actually this isn't the case when strings are rendered on the heap)
-          assert(typeof kvPair[0] == "string");
-          // common case ...
-          var attrnameStr = htmlspecialchars(kvPair[0]);
-          keyTd.append('<span class="keyObj">' + attrnameStr + '</span>');
-
-          // values can be arbitrary objects, so recurse:
+          var attrnameStr;
+          if (typeof kvPair[0] === "string") {
+            attrnameStr = htmlspecialchars(kvPair[0]);
+          } else {
+            attrnameStr = htmlspecialchars(String(kvPair[0]));
+          }
+          keyTd.append('<span class=\"keyObj\">' + attrnameStr + '</span>');
           myViz.renderNestedObject(kvPair[1], stepNum, valTd);
         });
       }
@@ -3621,26 +3853,115 @@ class DataVisualizer {
       assert(obj[0] == 'C_ARRAY');
       assert(obj.length >= 2);
       var addr = obj[1];
-
       var leader = '';
-      d3DomElement.append('<div class="typeLabel">' + leader + 'array</div>');
+      // --- 新增：内存细节显示 ---
+      let memoryDetailsHtml = '';
+      if (this.showMemoryDetails) {
+        memoryDetailsHtml += `<span class='cdata-addr'>@${addr}</span> `;
+      }
+      d3DomElement.append(`<div class="typeLabel">${memoryDetailsHtml}${leader}array</div>`);
       d3DomElement.append('<table class="cArrayTbl"></table>');
       var tbl = d3DomElement.children('table');
-
       tbl.append('<tr></tr><tr></tr>');
       var headerTr = tbl.find('tr:first');
       var contentTr = tbl.find('tr:last');
-      $.each(obj, function(ind, val) {
-        if (ind < 2) return; // skip 'C_ARRAY' and addr
+      // 统一所有元素的stride（字节宽度）
+      let stride = 1;
+      let isPointerArray = true;
+      let pointerBytes = 8; // 默认指针宽度
+      for (let i = 2; i < obj.length-1; i++) { //obj.length-1 是因为最后一个元素是元数据 不显示
+        let cdata = obj[i];
+        if (Array.isArray(cdata) && cdata.length > 2 && cdata[2] === 'pointer') {
+          if (cdata[4] && cdata[4].bytes) {
+            pointerBytes = cdata[4].bytes;
+          }
+          // 处理指针类型的数组
+          if (cdata[2] === 'pointer' && cdata[3] && typeof cdata[3] === 'string' && cdata[3].startsWith('0x')) {
+            // 源id eltAddr = cdata[1]
+            let ptrSrcId = myViz.generateHeapObjID('cdata_' + cdata[1], stepNum);
+            // 目标id
+            let ptrTargetId = myViz.generateHeapObjID('cdata_' + cdata[3], stepNum);
+            // 记录连接关系
+            if (!myViz.jsPlumbManager.connectionEndpointIDs.has(ptrSrcId)) {
+              myViz.jsPlumbManager.connectionEndpointIDs.set(ptrSrcId, ptrTargetId);
+              myViz.jsPlumbManager.heapConnectionEndpointIDs.set(ptrSrcId, ptrTargetId);
+            }
+          }
 
-        // add a new column and then pass in that newly-added column
-        // as d3DomElement to the recursive call to child:
-        headerTr.append('<td class="cArrayHeader"></td>');
-        headerTr.find('td:last').append(ind - 2 /* adjust */);
+        } else {
+          isPointerArray = false;
+        }
+        if (Array.isArray(cdata) && cdata.length > 4 && cdata[4] && cdata[4].bytes) {
+          stride = Math.max(stride, cdata[4].bytes);
+        }
+      }
+      if (isPointerArray) {
+        stride = pointerBytes;
+      }
+      // 获取元素字节数（优先从第一个元素的metadata里取）
+      let eltBytes = 1;
+      for (let i = 2; i < obj.length; i++) {
+        if (Array.isArray(obj[i]) && obj[i][4] && obj[i][4].bytes) {
+          eltBytes = obj[i][4].bytes;
+          break;
+        }
+      }
+      // 解析首地址为数字
+      let baseAddr = 0;
+      try {
+        baseAddr = parseInt(addr, 16);
+      } catch (e) { baseAddr = 0; }
 
-        contentTr.append('<td class="cArrayElt"></td>');
-        myViz.renderNestedObject(val, stepNum, contentTr.find('td:last'));
-      });
+      for (let i = 2; i < obj.length-1; i++) { //obj.length-1 是因为最后一个元素是元数据 不显示
+          headerTr.append(`<td class="cArrayHeader">${i - 2}</td>`);
+          // 统一宽度样式
+          contentTr.append(`<td class="cArrayElt" style="min-width:${Math.max(40, stride*12)}px"></td>`);
+          let cell = contentTr.find('td:last');
+          let cdata = obj[i];
+          // 计算当前元素地址
+           if (Array.isArray(cdata) && cdata.length > 4 && cdata[4] && cdata[4].bytes) {
+              stride = Math.max(stride, cdata[4].bytes);
+            }
+          let eltAddrNum = baseAddr + (i - 2) * stride;
+          let eltAddr = '0x' + eltAddrNum.toString(16).toUpperCase();
+
+          // 类型名
+          let typeLabel = '';
+          if (Array.isArray(cdata) && cdata.length > 2) {
+            typeLabel = cdata[2];
+          }
+          // 渲染cdataHeader
+          let headerHtml = '';
+          if (this.showMemoryDetails) {
+            headerHtml += `<div class="cdataHeader"><div class="memAddrSmall cdataElt" id="${myViz.generateHeapObjID('cdata_' + eltAddr, stepNum)}">${eltAddr}</div><div class="typeLabel ">${typeLabel}</div></div>`;
+          } else {
+            headerHtml += `<div class="cdataHeader"><div class="memAddrSmall cdataElt" id="${myViz.generateHeapObjID('cdata_' + eltAddr, stepNum)}"><!--${eltAddr}--></div><div class="typeLabel">${typeLabel}</div></div>`;
+          }
+          // 渲染cdataElt
+          let eltValHtml = '';
+          if (Array.isArray(cdata)) {
+            // 复用已有的C_DATA渲染
+            let tmpDiv = $('<div>');
+            this.renderCData(cdata, stepNum, tmpDiv);
+            eltValHtml = tmpDiv.html();
+
+            // --- 新增：如果是指针类型，自动生成箭头 ---
+            if (cdata[2] === 'pointer' && cdata[3] && typeof cdata[3] === 'string' && cdata[3].startsWith('0x')) {
+              // 源id
+              let ptrSrcId = myViz.generateHeapObjID('cdata_' + eltAddr, stepNum);
+              // 目标id
+              let ptrTargetId = myViz.generateHeapObjID('cdata_' + cdata[3], stepNum);
+              // 记录连接关系
+              if (!myViz.jsPlumbManager.connectionEndpointIDs.has(ptrSrcId)) {
+                myViz.jsPlumbManager.connectionEndpointIDs.set(ptrSrcId, ptrTargetId);
+                myViz.jsPlumbManager.heapConnectionEndpointIDs.set(ptrSrcId, ptrTargetId);
+              }
+            }
+          } else {
+            eltValHtml = `<div class="cdataElt">${cdata}</div>`;
+          }
+          cell.append(headerHtml + eltValHtml);
+        }
     }
   }
 
@@ -3712,6 +4033,66 @@ class DataVisualizer {
     }
   }
 
+  // 添加动态提示功能
+  initializeTooltips() {
+    const root = this.domRoot;
+    // 移除旧的tooltip
+    root.find('.tooltip').remove();
+    // 事件委托，支持动态生成的元素
+    root.on('mouseenter', '.cData, .cArrayContainer', function (e) {
+      const title = $(this).attr('title');
+      if (title) {
+        const tooltip = $('<div class="tooltip">').text(title.replace(/\n/g, '\n'));
+        $('body').append(tooltip);
+        const offset = $(this).offset();
+        if (!offset) return; // 防止offset为undefined时报错
+        tooltip.css({
+          left: offset.left + $(this).outerWidth() + 8,
+          top: offset.top - 2
+        });
+      }
+    });
+    root.on('mouseleave', '.cData, .cArrayContainer', function () {
+      $('.tooltip').remove();
+    });
+    root.on('mousemove', '.cData, .cArrayContainer', function (e) {
+      $('.tooltip').css({
+        left: e.pageX + 12,
+        top: e.pageY - 8
+      });
+    });
+  }
+
+  // 添加调试信息显示
+  private showDebugInfo(element: JQuery, data: any): void {
+    const debugContainer = $('<div>')
+      .addClass('debugInfo')
+      .appendTo(element);
+      
+    if (data.metadata) {
+      const metadata = data.metadata;
+      const infoParts = [];
+      
+      if (this.showMemoryDetails && (metadata.bytes || metadata.elt_bytes)) {
+        infoParts.push(
+          `<span class="sizeInfo"> ${metadata.bytes || metadata.elt_bytes}BYTE</span>`
+        );
+      }
+      
+      if (metadata.heap_block) {
+        infoParts.push('堆分配');
+      }
+      
+      if ( metadata.target_type && this.showMemoryDetails) {
+        infoParts.push(
+          `<span class="typeInfo">目标类型: ${metadata.target_type}</span>`
+        );
+      }
+      
+      debugContainer.html(infoParts.join(' | '));
+    }
+  }
+
 } // END class DataVisualizer
 
 class ProgramOutputBox {
@@ -3725,9 +4106,9 @@ class ProgramOutputBox {
     this.owner = owner;
     this.domRoot = domRoot;
 
-    var outputsHTML =
+      var outputsHTML =
       '<div id="progOutputs">\
-         <div id="printOutputDocs">Printf/Cout标准输出</div>\n\
+         <div id="printOutputDocs">printf/cout标准输出</div>\n\
          <textarea id="pyStdout" cols="40" rows="5" wrap="off" readonly></textarea>\
        </div>';
 
@@ -4212,7 +4593,8 @@ class NavigationController {
     
     // 如果在输入框中,不触发快捷键
         if ($('input:focus').length > 0) return;
-
+        if ($('textarea:focus').length >0) return;
+        if (document.URL.indexOf('edit')!=-1) return;
         switch(e.keyCode) {
           case 70: // F key
             this.domRoot.find("#jmpFirstInstr").click();
@@ -4313,9 +4695,8 @@ class NavigationController {
 
        // 在所有UI元素创建完成后,加载保存的设置
       this.loadVisualizationSettings();
-      
-        rerenderJsPlumbConnectors(); 
-
+      this.saveVisualizationSettings();
+      rerenderJsPlumbConnectors(); 
 
       // note that many of these options aren't present in the OLD OLD
       // OLD version of ./lib/jquery.jsPlumb-1.3.10-all-min.js that
@@ -4609,10 +4990,8 @@ export function htmlspecialchars(str) {
     // ignore these for now ...
     //str = str.replace(/"/g, "&quot;");
     //str = str.replace(/'/g, "&#039;");
-
     str = str.replace(/</g, "&lt;");
     str = str.replace(/>/g, "&gt;");
-
     // replace spaces:
     str = str.replace(/ /g, "&nbsp;");
 

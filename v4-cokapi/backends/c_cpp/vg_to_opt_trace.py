@@ -1,25 +1,18 @@
+# -*- coding: utf-8 -*-
 # Convert a raw trace created by the Valgrind OPT C backend to a format
 # that the OPT frontend can digest, making various optimizations and
 # clean-ups along the way to beautify the trace
 
 # Created 2015-10-04 by Philip Guo
 
-# pass in full path name of a source file, which should end in '.c' or '.cpp'.
-# assumes that the Valgrind-produced trace is $basename.vgtrace
-# (without the '.c.' or '.cpp' extension)
-#
-# optionally, if you want to pass an error message to display at the end
-# of the trace, pass it in via the --end-of-trace-error-msg argument
+# 用法说明：
+# 传入一个以 .c 或 .cpp 结尾的源文件全路径，假定 Valgrind 生成的 trace 文件为 $basename.vgtrace
+# 可选参数 --end-of-trace-error-msg 用于在 trace 结尾显示自定义错误信息
 
-
-# this is pretty brittle and dependent on the user's gcc version and
-# such because it generates code to conform to certain calling
-# conventions, frame pointer settings (DON'T omit it!), etc., eeek
+# 依赖于 gcc 版本和编译参数，trace 结构可能有差异
+# 推荐编译参数：gcc -ggdb -O0 -fno-omit-frame-pointer
 #
-# we're assuming that the user has compiled with:
-# gcc -ggdb -O0 -fno-omit-frame-pointer
-#
-# on a platform like:
+# 适用平台示例：
 '''
 $ gcc -v
 Using built-in specs.
@@ -31,182 +24,305 @@ Thread model: posix
 gcc version 4.8.4 (Ubuntu 4.8.4-2ubuntu1~14.04)
 '''
 
-
 import json
 import os
 import pprint
 import sys
 from optparse import OptionParser
 
-pp = pprint.PrettyPrinter(indent=2)
+pp = pprint.PrettyPrinter(indent=2)  # 用于调试时美观打印对象
 
-RECORD_SEP = '=== pg_trace_inst ==='
+RECORD_SEP = '=== pg_trace_inst ==='  # trace 文件中每条记录的分隔符
 
+MAX_STEPS = 2000  # trace 步数上限，防止死循环
+ONLY_ONE_REC_PER_LINE = True  # 是否只保留每行的第一个 step_line 事件
 
-MAX_STEPS = 1000
-ONLY_ONE_REC_PER_LINE = True
+all_execution_points = []  # 存储所有解析出的 trace 步骤
 
-all_execution_points = []
+# 处理一条 trace 记录，返回 False 表示遇到异常或解析失败
+# lines: 单条记录的所有原始文本行
+# 主要负责分类、解析、调用 process_json_obj 生成标准化 trace 步骤
+# 并追加到 all_execution_points
+# 如果遇到异常事件，立即终止后续解析
+# 返回 True/False 表示是否继续解析后续记录
 
-# False if record isn't parsed properly or is an exception
 def process_record(lines):
     if not lines:
-        return True # 'nil success case to keep the parser going
+        return True # 空记录直接跳过，保持解析流程
 
-    err_lines = []
-    stdout_lines = []
-    regular_lines = []
+    err_lines = []      # 错误信息行
+    stdout_lines = []   # 标准输出行
+    regular_lines = []  # 其它普通内容
     for e in lines:
-        if e.startswith('ERROR: '):
+        if e.startswith('ERROR: '): # 错误信息行
             err_lines.append(e)
-        elif e.startswith('STDOUT: '):
+        elif e.startswith('STDOUT: '): # 标准输出行
             stdout_lines.append(e)
-        elif e.startswith('MAX_STEPS_EXCEEDED'):
-            pass # oof
+        elif e.startswith('MAX_STEPS_EXCEEDED'): # 超步数提示，忽略
+            pass # 超步数提示，忽略
         else:
-            regular_lines.append(e)
+            regular_lines.append(e) # 其它普通内容行
 
-    rec = '\n'.join(regular_lines)
+    rec = '\n'.join(regular_lines) # 只保留普通内容行
     try:
-        # sometimes floating-point values print as:
-        # "val":******
-        # when they're weird values like overflow and NaN. in those
-        # cases, replace with "val": null so as not to crash the json
-        # parser
-        rec = rec.replace('"val":******', '"val":null')
+        # 处理特殊浮点值，防止 json 解析失败
+        rec = rec.replace('"val":******', '"val":null') 
         obj = json.loads(rec)
     except ValueError:
-        print >> sys.stderr, "Ugh, bad record!", rec
+        print >> sys.stderr, "错误的记录,无法解析", rec # 解析失败
         return False
 
-    assert len(stdout_lines) == 1 # always have one!
-    # it's encoded as JSON in a single line
+    assert len(stdout_lines) == 1 # 每条记录应有一行 STDOUT
     stdout_str = json.loads(stdout_lines[0][len('STDOUT: '):])
 
-    # take the first error only
-    err_str = err_lines[0] if err_lines else None
+    err_str = err_lines[0] if err_lines else None  # 只取第一条错误
 
-    x = process_json_obj(obj, err_str, stdout_str)
-    all_execution_points.append(x)
-    # it's a good idea to fail-fast on first exception since it's
-    # pedagogically bad to keep executing despite errors
-    if x['event'] == 'exception':
+    x = process_json_obj(obj, err_str, stdout_str) # 生成标准化 trace 步骤
+    all_execution_points.append(x) 
+    # 如果遇到异常事件，立即终止后续解析
+    if x['event'] == 'exception': 
         return False
     return True
 
+# 解析单条 json 记录，生成标准化 trace 步骤
+# obj: 解析后的 json 对象
+# err_str: 错误信息
+# stdout_str: 标准输出
+# 返回 dict，包含 heap/stack/globals/line/func_name/event/stdout 等
 
 def process_json_obj(obj, err_str, stdout_str):
-    #print '---'
-    #pp.pprint(obj)
-    #print
+    #assert len(obj['stack']) > 0 # C 程序至少有 main
+    obj['stack'].reverse() # 让栈按从高到低顺序排列
+    top_stack_entry = obj['stack'][-1] # 栈顶函数
 
-    assert len(obj['stack']) > 0 # C programs always have a main at least!
-    obj['stack'].reverse() # make the stack grow down to follow convention
-    top_stack_entry = obj['stack'][-1]
+    # 构造 trace 步骤对象
+    ret = {} 
 
-    # create an execution point object
-    ret = {}
+    heap = {} # 用于存储堆对象，避免重复
+    stack = [] # 用于存储栈帧信息
+    # 记录当前栈帧的局部变量
+    # 以及当前栈帧的函数名、行号等信息
+    enc_globals = {} 
+    ret['heap'] = heap 
+    ret['stack_to_render'] = stack 
+    ret['globals'] = enc_globals 
 
-    heap = {}
-    stack = []
-    enc_globals = {}
-    ret['heap'] = heap
-    ret['stack_to_render'] = stack
-    ret['globals'] = enc_globals
-
-    # sometimes there are no globals in a trace
-    if 'ordered_globals' in obj:
+    # 记录全局变量顺序
+    if 'ordered_globals' in obj: 
         ret['ordered_globals'] = obj['ordered_globals']
     else:
         ret['ordered_globals'] = []
 
-    ret['line'] = obj['line']
-    ret['func_name'] = top_stack_entry['func_name'] # use the 'topmost' entry's name
+    ret['line'] = obj['line'] # 当前行号
+    ret['func_name'] = top_stack_entry['func_name'] # 当前栈顶函数名
 
+    # 标记事件类型
     if err_str:
-        ret['event'] = 'exception'
+        ret['event'] = 'exception' 
         ret['exception_msg'] = err_str + '\n(Stopped running after the first error. Please fix your code.)'
     else:
         ret['event'] = 'step_line'
 
     ret['stdout'] = stdout_str
 
+    # 处理全局变量
     if 'globals' in obj:
-        for g_var, g_val in obj['globals'].iteritems():
-            enc_globals[g_var] = encode_value(g_val, heap)
+        for g_var, g_val in obj['globals'].iteritems(): 
+            enc_globals[g_var] = encode_value(g_val, heap)  
 
+    # 处理栈帧
     for e in obj['stack']:
         stack_obj = {}
         stack.append(stack_obj)
 
-        stack_obj['func_name'] = e['func_name']
-        stack_obj['ordered_varnames'] = e['ordered_varnames']
+        stack_obj['func_name'] = e['func_name'] 
+        stack_obj['ordered_varnames'] = e['ordered_varnames']   
         stack_obj['is_highlighted'] = e is top_stack_entry
-
-        # hacky: does FP (the frame pointer) serve as a unique enough frame ID?
-        # sometimes it's set to 0 :/
         stack_obj['frame_id'] = e['FP']
-
         stack_obj['unique_hash'] = stack_obj['func_name'] + '_' + stack_obj['frame_id']
-
         if 'line' in e:
             stack_obj['line'] = e['line']
-
-        # unsupported
         stack_obj['is_parent'] = False
         stack_obj['is_zombie'] = False
         stack_obj['parent_frame_id_list'] = []
-
         enc_locals = {}
         stack_obj['encoded_locals'] = enc_locals
-
         for local_var, local_val in e['locals'].iteritems():
             enc_locals[local_var] = encode_value(local_val, heap)
 
-
-    #pp.pprint(ret)
-    #print [(e['func_name'], e['frame_id']) for e in ret['stack_to_render']]
+    # 指令级trace输出
+    if 'inst_info' in obj:
+        ret['inst_info'] = obj['inst_info']
 
     return ret
 
+# 类型推断辅助函数，返回 {'target_type': ..., 'bytes': ...}
+# 用于生成每个变量/对象的类型描述和字节数
 
-# returns an encoded value in OPT format and possibly mutates the heap
+def infer_type_hint(obj):
+    target_type = obj.get('type', '') 
+    size = 0
+    if obj.get('kind') == 'pointer' and not obj.get('type'):
+        print >> sys.stderr, 'Pointer type missing:', obj
+    # 指针类型特殊处理
+    if obj.get('kind') == 'pointer':
+        base_type = ''
+        if 'type' in obj and obj['type']:
+            t = obj['type'].strip()
+            if t.endswith('*'):
+                base_type = t[:-1].strip()
+            else:
+                base_type = t
+        elif 'deref_val' in obj and isinstance(obj['deref_val'], dict):
+            base_type = infer_type_hint(obj['deref_val']).get('target_type', '')
+        if base_type:
+            target_type =  base_type
+        else:
+            target_type = 'unknown'
+        size = 8
+    elif obj.get('kind') == 'base':
+        if 'char' in target_type:
+            size = 1
+        elif 'int' in target_type:
+            size = 4
+        elif 'long' in target_type:
+            size = 8
+        elif 'float' in target_type:
+            size = 4
+        elif 'double' in target_type:
+            size = 8
+        elif 'pointer' in target_type or '*' in target_type:
+            size = 8
+    elif obj.get('kind') == 'array':
+        element_size = 1
+        if obj.get('type'):
+            if 'char' in obj['type']:
+                element_size = 1
+            elif 'int' in obj['type']:
+                element_size = 4
+            elif 'long' in obj['type']:
+                element_size = 8
+            elif 'float' in obj['type']:
+                element_size = 4
+            elif 'double' in obj['type']:
+                element_size = 8
+        total_elements = len(obj.get('val', []))
+        size = element_size * total_elements
+    elif obj.get('kind') == 'struct':
+        for member in obj.get('val', {}).values():
+            if isinstance(member, dict):
+                size += infer_type_hint(member).get('bytes', 0)
+    return {
+        'target_type': target_type, 
+        'bytes': size
+    }
+
+# 编码单个变量/对象，递归处理嵌套结构，生成可序列化的trace格式
+# heap: 用于存储堆对象，避免重复
+
 def encode_value(obj, heap):
+    # 提取block_info元数据（如类型、数组信息、虚表等）
+    def extract_blockinfo(obj):
+        blockinfo = obj.get('block_info')
+        if not blockinfo:
+            return None
+        out = {}
+        if 'type' in blockinfo and blockinfo['type']:
+            out['type_info'] = blockinfo['type']                                    
+        if 'array' in blockinfo and blockinfo['array']:
+            out['array_info'] = blockinfo['array']
+        if 'has_vtable' in blockinfo:
+            out['has_vtable'] = blockinfo['has_vtable']
+        return out if out else None
+
     if obj['kind'] == 'base':
-        return ['C_DATA', obj['addr'], obj['type'], obj['val']]
+        val = ['C_DATA', obj['addr'], obj['type'], obj['val']]
+        blockinfo = extract_blockinfo(obj)
+        meta = {}
+        if blockinfo:
+            meta['__blockinfo__'] = blockinfo
+        type_info = infer_type_hint(obj)
+        # 只有 pointer 类型才加 target_type
+        if type_info and ('pointer' in obj['type'] or '*' in obj['type']):
+            meta['target_type'] = type_info['target_type']
+        if type_info:
+            meta['bytes'] = type_info['bytes']
+        if meta:
+            val.append(meta) # 尾部元数据，便于前端显示类型/字节数
+        return val
 
     elif obj['kind'] == 'pointer':
         if 'deref_val' in obj:
-            encode_value(obj['deref_val'], heap) # update the heap
-        return ['C_DATA', obj['addr'], 'pointer', obj['val']]
+            encode_value(obj['deref_val'], heap) # 递归处理指针指向的对象
+        val = ['C_DATA', obj['addr'], 'pointer', obj['val']]
+        blockinfo = extract_blockinfo(obj)
+        meta = {}
+        if blockinfo:
+            meta['__blockinfo__'] = blockinfo
+        type_info = infer_type_hint(obj)
+        if type_info:
+            meta['target_type'] = type_info['target_type']
+            meta['bytes'] = type_info['bytes']
+        if meta:
+            val.append(meta)
+        return val
 
     elif obj['kind'] == 'struct':
         ret = ['C_STRUCT', obj['addr'], obj['type']]
-
-        # sort struct members by address so that they look ORDERED
         members = obj['val'].items()
         members.sort(key=lambda e: e[1]['addr'])
         for k, v in members:
-            entry = [k, encode_value(v, heap)] # TODO: is an infinite loop possible here?
+            entry = [k, encode_value(v, heap)]
             ret.append(entry)
+        blockinfo = extract_blockinfo(obj)
+        meta = {}
+        if blockinfo:
+            meta['__blockinfo__'] = blockinfo
+        type_info = infer_type_hint(obj)
+        if type_info:
+            meta['target_type'] = type_info['target_type']
+            meta['bytes'] = type_info['bytes']
+        if meta:
+            val.append(meta)
         return ret
 
     elif obj['kind'] == 'array':
-        # backwards compatibility for old 1-D array format:
-        if 'dimensions' not in obj or len(obj['dimensions']) < 2:
-            ret = ['C_ARRAY', obj['addr']]
+        # remote.json风格：C_ARRAY的第三个元素是数组元信息（如元素字节数、heap_block等），后面才是元素
+        # 判断是否是堆分配的block（heap_block），如果是则加元信息，否则不加
+        is_heap_block = obj.get('heap_block', False)
+        element_size = 1
+        if obj.get('type'):
+            if 'char' in obj['type']:
+                element_size = 1
+            elif 'int' in obj['type']:
+                element_size = 4
+            elif 'long' in obj['type']:
+                element_size = 8
+            elif 'float' in obj['type']:
+                element_size = 4
+            elif 'double' in obj['type']:
+                element_size = 8
+        # remote.json风格：堆block加元信息
+        if is_heap_block:
+            meta = {
+                'elt_bytes': element_size,
+                'heap_block': True
+            }
+            # 兼容oob_addr
+            if 'oob_addr' in obj:
+                meta['oob_addr'] = obj['oob_addr']
+            ret = ['C_ARRAY', obj['addr'], meta]
             for e in obj['val']:
-                ret.append(encode_value(e, heap)) # TODO: is an infinite loop possible here?
+                ret.append(encode_value(e, heap))
             return ret
         else:
-            # put dimensions as the 3rd element:
-            ret = ['C_MULTIDIMENSIONAL_ARRAY', obj['addr'], obj['dimensions']]
+            # 普通数组不加target_type元数据
+            ret = ['C_ARRAY', obj['addr']]
             for e in obj['val']:
-                ret.append(encode_value(e, heap)) # TODO: is an infinite loop possible here?
+                ret.append(encode_value(e, heap))
             return ret
 
     elif obj['kind'] == 'typedef':
-        # pass on the typedef type name into obj['val'], then recurse
         obj['val']['type'] = obj['type']
         return encode_value(obj['val'], heap)
 
@@ -214,14 +330,26 @@ def encode_value(obj, heap):
         assert obj['addr'] not in heap
         new_elt = ['C_ARRAY', obj['addr']]
         for e in obj['val']:
-            new_elt.append(encode_value(e, heap)) # TODO: is an infinite loop possible here?
+            new_elt.append(encode_value(e, heap))
+        blockinfo = extract_blockinfo(obj)
+        meta = {}
+        if blockinfo:
+            meta['__blockinfo__'] = blockinfo
+        type_info = infer_type_hint(obj)
+        # 只有 pointer 类型才加 target_type
+        if type_info and type_info['target_type'].startswith('pointer'):
+            meta['target_type'] = type_info['target_type']
+            meta['bytes'] = type_info['bytes']
+        elif type_info:
+            meta['bytes'] = type_info['bytes']
+        if meta:
+            new_elt.append(meta)
+        # heap对象只存一份，避免重复
         heap[obj['addr']] = new_elt
-        # TODO: what about heap-to-heap pointers?
-
     else:
         assert False
 
-
+# ================= 主程序入口 =================
 if __name__ == '__main__':
     parser = OptionParser(usage="Create an OPT trace from a Valgrind trace")
     parser.add_option("--create_jsvar", dest="js_varname", default=None,
@@ -242,6 +370,7 @@ if __name__ == '__main__':
 
     success = True
 
+    # 逐行读取 .vgtrace 文件，按分隔符切分为多条记录
     for line in open(basename + '.vgtrace'):
         line = line.strip()
         if line == RECORD_SEP:
@@ -252,143 +381,82 @@ if __name__ == '__main__':
         else:
             cur_record_lines.append(line)
 
-    # only parse final record if we've been successful so far; i.e., die
-    # on the first failed parse
+    # 处理最后一条记录
     if success:
         success = process_record(cur_record_lines)
 
-    # now do some filtering action based on heuristics
+    # ========== trace 后处理与优化 ========== #
     filtered_execution_points = []
 
+    # 1. 过滤掉无效帧（如 frame_id 为 0x0、重复、???等）
     for pt in all_execution_points:
-        # any execution point with a 0x0 frame pointer is bogus
         frame_ids = [e['frame_id'] for e in pt['stack_to_render']]
         func_names = [e['func_name'] for e in pt['stack_to_render']]
         if '0x0' in frame_ids:
             continue
-
-        # any point with DUPLICATE frame_ids is bogus, since it means
-        # that the frame_id of some frame hasn't yet been updated
         if len(set(frame_ids)) < len(frame_ids):
             continue
-
-        # any point with a weird '???' function name is bogus
-        # but we shouldn't have any more by now
-        #assert '???' not in func_names # actually nevermind on this for now - we still sometimes get '???' so just skip those
         if '???' in func_names:
             continue
-
-        #print func_names, frame_ids
         filtered_execution_points.append(pt)
-
 
     final_execution_points = []
     if filtered_execution_points:
         final_execution_points.append(filtered_execution_points[0])
-        # finally, make sure that each successive entry contains
-        # frame_ids that are either identical to the previous one, or
-        # differ by the addition or subtraction of one element at the
-        # end, which represents a function call or return, respectively.
-        # there are weird cases like:
-        #
-        # [u'main'] [u'0xFFEFFFE30']
-        # [u'main'] [u'0xFFEFFFE30']
-        # [u'foo'] [u'0xFFEFFFDC0'] <- bogus
-        # [u'main', u'foo'] [u'0xFFEFFFE30', u'0xFFEFFFDC0']
-        # [u'main', u'foo'] [u'0xFFEFFFE30', u'0xFFEFFFDC0']
-        #
-        # where the middle entry should be FILTERED OUT since it's
-        # missing 'main' for some reason
+        # 2. 只保留栈帧变化合理的步骤（同一帧、进栈、退栈）
         for prev, cur in zip(filtered_execution_points, filtered_execution_points[1:]):
             prev_frame_ids = [e['frame_id'] for e in prev['stack_to_render']]
             cur_frame_ids = [e['frame_id'] for e in cur['stack_to_render']]
-
-            # identical, we're good to go
             if prev_frame_ids == cur_frame_ids:
                 final_execution_points.append(cur)
             elif len(prev_frame_ids) < len(cur_frame_ids):
-                # cur_frame_ids is prev_frame_ids + 1 extra element on
-                # the end -> function call
                 if prev_frame_ids == cur_frame_ids[:-1]:
                     final_execution_points.append(cur)
             elif len(prev_frame_ids) > len(cur_frame_ids):
-                # cur_frame_ids is prev_frame_ids MINUS the last element on
-                # the end -> function return
                 if cur_frame_ids == prev_frame_ids[:-1]:
                     final_execution_points.append(cur)
-
         assert len(final_execution_points) <= len(filtered_execution_points)
 
         cur_ind = 1
-        # now mark 'call' and' 'return' events via the same heuristic as above
+        # 3. 标记 call/return 事件，并优化参数初始化冗余步骤
         for prev, cur in zip(final_execution_points, final_execution_points[1:]):
             prev_frame_ids = [e['frame_id'] for e in prev['stack_to_render']]
             cur_frame_ids = [e['frame_id'] for e in cur['stack_to_render']]
-
             if len(prev_frame_ids) < len(cur_frame_ids):
                 if prev_frame_ids == cur_frame_ids[:-1]:
                     cur['event'] = 'call'
-                # optimization -- when you find a 'call' instruction,
-                # look ahead in the trace to find all *consecutive*
-                # entries with the same frame_ids and on the same line,
-                # then eliminate those from the trace.
-                #
-                # if we don't do this optimization, then the visualizer
-                # will show multiple steps for entering a function call,
-                # with formal parameters being filled in with their
-                # values along the way; while this is somewhat
-                # informative, it's also kinda extraneous. instead, we
-                # want to skip over all parameter initialization and
-                # jump right into the function body right away with all
-                # the parameters initialized
-                lookahead = final_execution_points[cur_ind+1:] # start at the next index
+                # 优化：跳过同一行/同一帧的冗余参数初始化
+                lookahead = final_execution_points[cur_ind+1:]
                 for future_step in lookahead:
                     future_frame_ids = [e['frame_id'] for e in future_step['stack_to_render']]
                     if cur_frame_ids == future_frame_ids and cur['line'] == future_step['line']:
                         future_step['to_delete'] = True
                     else:
-                        # BREAK AS SOON AS you change lines or stack
-                        # frame_id contents, since we don't want to be
-                        # over-eager and cut out *non-consecutive*
-                        # elements from the trace
                         break
             elif len(prev_frame_ids) > len(cur_frame_ids):
                 if cur_frame_ids == prev_frame_ids[:-1]:
                     prev['event'] = 'return'
-            cur_ind += 1 # tricky indent
-
-        # make the last statement a faux 'return', presumably from main
+            cur_ind += 1
+        # 4. 最后一步标记为 return 或 exception
         if success:
             if options.end_of_trace_error_msg:
-                # make last statement an exception if end_of_trace_error_msg passed in
                 final_execution_points[-1]['event'] = 'exception'
                 final_execution_points[-1]['exception_msg'] = options.end_of_trace_error_msg
             else:
-                # make last statement a faux 'return', presumably from main
                 final_execution_points[-1]['event'] = 'return'
 
-
-    # kludgy: don't do to_delete for return events, since if we do this,
-    # then we may be skipping return events for one-liner functions like
-    #   int getInt() { return static_const_member;}
-    # due to our above optimization to cut out all events on the same
-    # line as a 'call' instruction. in a one-liner function, the call
-    # and return are on the same line, so we don't want to delete the return
+    # 5. 不要删除一行函数体的 return（防止丢失重要返回）
     for e in final_execution_points:
         if e['event'] == 'return':
             if 'to_delete' in e:
                 del e['to_delete']
 
-
-    # only keep the FIRST 'step_line' event for any given line, to match what
-    # a line-level debugger would do
-    # (try to do this before other optimizations)
+    # 6. 只保留每行第一个 step_line（已加详细注释）
     if ONLY_ONE_REC_PER_LINE:
         tmp = []
         prev_event = None
         prev_line = None
         prev_frame_ids = None
-
         for elt in final_execution_points:
             skip = False
             cur_event = elt['event']
@@ -398,71 +466,122 @@ if __name__ == '__main__':
                 if cur_event == prev_event == 'step_line':
                     if cur_line == prev_line and cur_frame_ids == prev_frame_ids:
                         skip = True
-
             if not skip:
                 tmp.append(elt)
-
             prev_event = cur_event
             prev_line = cur_line
             prev_frame_ids = cur_frame_ids
+        final_execution_points = tmp
 
-        final_execution_points = tmp # the ole' switcheroo
-
-    # optimization: if we're returning to the SAME LINE in the
-    # caller as it originally called this function with, then
-    # skip this step since it's redundant. for example:
-    '''
-void* foo() {
-void *x = malloc(1);
-return x;
-}
-int main() {
-void *x = foo(); // <-- there is an extraneous step here AFTER foo returns but
-             //     before its return value is assigned to x. this optimization
-             //     eliminates this step to clean up the trace a bit
-}
-    '''
+    # 7. 优化：如果 return 后回到调用者同一行，且下一个事件函数名一致，则跳过该步骤
     for prev, cur, next in zip(final_execution_points, final_execution_points[1:], final_execution_points[2:]):
         if prev['event'] == 'return' and len(prev['stack_to_render']) > 1:
             prev_caller = prev['stack_to_render'][-2]
             cur_top = cur['stack_to_render'][-1]
-            # one additional subtle caveat is that we should delete only
-            # if cur['func_name'] == next['func_name'] because otherwise
-            # we will be directly jumping into another function without
-            # first showing the return to cur, which may look JARRING
             if (cur_top['frame_id'] == prev_caller['frame_id']) and \
                (cur_top['line'] == prev_caller['line']) and \
                (cur['func_name'] == next['func_name']):
                 cur['to_delete'] = True
 
-
-    # now eliminate all steps before the first call to 'main' to clean up the trace,
-    # especially for C++ code with weird pre-main initializers
+    # 8. 删除 main 之前的所有步骤（C++全局初始化等）
     for e in final_execution_points:
         if e['func_name'] == 'main':
-            break # GET OUT!
+            break
         else:
             e['to_delete'] = True
 
-
+    # 9. 打印被删除的步骤（调试用）
     for e in final_execution_points:
         if 'to_delete' in e:
             print >> sys.stderr, 'to_delete:', json.dumps(e)
     final_execution_points = [e for e in final_execution_points if 'to_delete' not in e]
 
+    # 10. 过滤掉最后无用的“空return”步骤（heap、globals、stack_to_render都为空或无变量）
+    def is_useless_return_step(e):
+        if e.get('event') != 'return':
+            return False
+        if e.get('heap') and len(e['heap']) > 0:
+            return False
+        if e.get('globals') and len(e['globals']) > 0:
+            return False
+        stack = e.get('stack_to_render', [])
+        if not stack:
+            return True
+        for frame in stack:
+            if frame.get('encoded_locals') and len(frame['encoded_locals']) > 0:
+                return False
+            if frame.get('ordered_varnames') and len(frame['ordered_varnames']) > 0:
+                return False
+        return True
+    #final_execution_points = [e for e in final_execution_points if not is_useless_return_step(e)]
 
+    # 10.1 过滤掉无用的 step_line 步骤（main帧，所有变量都为空，stdout 为空）
+    # 只保留变量出现前的最后一个 main 空帧，其余 main 空帧全部过滤
+    def is_useless_step_line(e, idx, keep_idx):
+        if e.get('event') != 'step_line':
+            return False
+        if e.get('func_name') != 'main':
+            return False
+        if e.get('heap') and len(e['heap']) > 0:
+            return False
+        if e.get('globals') and len(e['globals']) > 0:
+            return False
+        if e.get('stdout'):
+            return False
+        stack = e.get('stack_to_render', [])
+        if len(stack) != 1:
+            return False
+        frame = stack[0]
+        if frame.get('func_name') != 'main':
+            return False
+        if frame.get('encoded_locals') and len(frame['encoded_locals']) > 0:
+            return False
+        if frame.get('ordered_varnames') and len(frame['ordered_varnames']) == 0:
+            return False
+        # 只保留变量出现前的最后一个 main 空帧
+        if idx == keep_idx:
+            return False
+        return True
+
+    # 找到变量出现前的最后一个 main 空帧的索引
+    last_empty_main_idx = None
+    for idx, e in enumerate(final_execution_points):
+        if e.get('event') == 'step_line' and e.get('func_name') == 'main':
+            stack = e.get('stack_to_render', [])
+            if len(stack) == 1:
+                frame = stack[0]
+                if frame.get('func_name') == 'main' and \
+                   (not frame.get('encoded_locals') or len(frame['encoded_locals']) == 0) and \
+                   (not frame.get('ordered_varnames') or len(frame['ordered_varnames']) == 0) and \
+                   (not e.get('heap') or len(e['heap']) == 0) and \
+                   (not e.get('globals') or len(e['globals']) == 0) and \
+                   not e.get('stdout'):
+                    last_empty_main_idx = idx
+                else:
+                    break  # 第一次出现变量就停止
+        else:
+            break  # 只在 main 空帧区间内查找
+
+    # 保留变量出现前的最后一个 main 空帧，return 帧始终保留
+    tmp = []
+    for idx, e in enumerate(final_execution_points):
+        if e.get('event') == 'return':
+            tmp.append(e)
+        elif not is_useless_step_line(e, idx, last_empty_main_idx):
+            tmp.append(e)
+    final_execution_points = tmp
+
+    # 11. 超步数截断
     if len(final_execution_points) > MAX_STEPS:
-      # truncate to MAX_STEPS entries
         final_execution_points = final_execution_points[:MAX_STEPS]
-        final_execution_points[-1]['event'] = 'instruction_limit_reached'
-        final_execution_points[-1]['exception_msg'] = 'Stopped after running ' + str(MAX_STEPS) + ' steps. Please shorten your code,\nsince Python Tutor is not designed to handle long-running code.'
+        final_execution_points[-1]['event'] = '超过步数限制'
+        final_execution_points[-1]['exception_msg'] = 'Stopped after running ' + str(MAX_STEPS) + ' steps. Please fix your code and try again.'
 
-
+    # 12. 读取源代码，生成最终 trace 结果
     cod = open(fn).read()
-    # produce the final trace, voila!
     final_res = {'code': cod, 'trace': final_execution_points}
 
-    # use sort_keys to get some sensible ordering on object keys
+    # 13. 按需输出为 js 变量、紧凑json或美化json
     if options.js_varname:
         s = json.dumps(final_res, indent=2, sort_keys=True)
         print 'var ' + options.js_varname + ' = ' + s + ';'

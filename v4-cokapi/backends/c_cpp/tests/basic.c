@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "mc_include.h"
 
 int bar(int, int, int, int);
 
@@ -25,7 +26,7 @@ int main() {
   stack_shorts[7] = 7;
   stack_shorts[9] = 9;
 
-  char* heap_str = (char*)malloc(7);
+  char* heap_str = MC_NEW_ARRAY(char, 7);
   heap_str[0] = 'B';
   heap_str[1] = 'o';
   heap_str[2] = 'b';
@@ -36,7 +37,7 @@ int main() {
   heap_str++;
   heap_str++;
 
-  unsigned short* heap_shorts = (unsigned short*)malloc(11 * sizeof(*heap_shorts));
+  unsigned short* heap_shorts = MC_NEW_ARRAY(unsigned short, 11);
   heap_shorts[1] = 1;
   heap_shorts[3] = 3;
   heap_shorts[5] = 5;

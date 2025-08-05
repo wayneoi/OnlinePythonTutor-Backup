@@ -101,7 +101,7 @@ $(document).ready(function() {
       $('#submitBtn').html("Submit answer");
       $('#submitBtn').attr('disabled', false);
 
-      $('#executeBtn').html("Visualize execution");
+      $('#executeBtn').html("可视化执行");
       $('#executeBtn').attr('disabled', false);
 
 

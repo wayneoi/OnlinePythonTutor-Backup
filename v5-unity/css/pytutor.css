@@ -308,7 +308,7 @@ div.ExecutionVisualizer table.listTbl td.listElt {
 /* make this slightly more compact than listTbl since arrays can be
    rendered on the stack so we want to kinda conserve space */
 div.ExecutionVisualizer table.cArrayTbl {
-  background-color: #ffffc6;
+  background-color: #e2ebf6;
   padding-left: 0px;
   padding-top: 0px;
   padding-bottom: 0px;

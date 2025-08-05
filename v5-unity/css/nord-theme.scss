@@ -63,3 +63,12 @@
     }
   }
 }
+
+ /* 覆盖 Chrome 主题的某些颜色 */
+.ace-chrome {
+  .ace_keyword { color: #881280 !important; }
+  .ace_string { color: #a31515 !important; }
+  .ace_constant { color: #098658 !important; } 
+  .ace_support { color: #0000ff !important; }
+  .ace_comment { color: #008000 !important; }
+}

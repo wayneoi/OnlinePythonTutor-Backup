@@ -87,7 +87,7 @@ int main()
 {
   int localArray15[15];
   char localString33[33];
-  int* localIntArray = (int*)malloc(6*sizeof(*localIntArray));
+  int* localIntArray = MC_NEW_ARRAY(int, 6);
   buffer* cur_buffer = 0;
   printf("buffer population[999]: %p\n", population);
   printf("buffer multiDimensional[4][5][12]: %p\n", multiDimensional);
@@ -120,10 +120,10 @@ int main()
 	 population[0].SS);
 
   globalInt = 6170;
-  globalIntPtr = (int*)malloc(sizeof(*globalIntPtr));
+  globalIntPtr = MC_NEW(int);
   *globalIntPtr = 6111;
 
-  populationPtr = (buffer*)malloc(sizeof(*populationPtr));
+  populationPtr = MC_NEW(buffer);
   strcpy(populationPtr->firstName, "123456789");
   populationPtr->age = 69;
   strcpy(populationPtr->middleName, "Ricky");

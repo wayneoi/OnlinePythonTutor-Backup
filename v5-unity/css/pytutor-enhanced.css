@@ -1,0 +1,90 @@
+/* 美化C/C++数据结构显示 */
+.cArrayContainer {
+  border: 1.5px solid #4a90e2;
+  border-radius: 6px;
+  margin: 8px 0;
+  background: #f7fbff;
+  box-shadow: 0 2px 8px #e3eaf3;
+  padding: 6px 10px;
+}
+.cArrayHeader {
+  font-weight: bold;
+  color: #2d5fa4;
+  margin-bottom: 4px;
+  font-size: 13px;
+  outline: 1px dashed #e93f34;
+}
+.cArrayTable {
+  border-collapse: collapse;
+  margin-bottom: 2px;
+}
+.cArrayTable th, .cArrayTable td {
+  border: 1px solid #b3c6e0;
+  padding: 2px 7px;
+  text-align: center;
+  font-size: 12px;
+}
+.cArrayIndex {
+  background: #eaf3fb;
+  color: #4a90e2;
+}
+.cArrayCell {
+  background: #fff;
+}
+.cData.pointerObj {
+  color: #b35c00;
+  font-weight: bold;
+  cursor: pointer;
+}
+.cData.uninitializedPointer {
+  color: #aaa;
+  font-style: italic;
+}
+.cData.charObj {
+  color: #2d5fa4;
+}
+.cData.numberObj {
+  color: #1a4d1a;
+}
+.cData {
+  padding: 0 2px;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+.cData:hover {
+  background: #ffe9b3;
+  box-shadow: 0 0 4px #ffd700;
+  z-index: 10;
+}
+.showDebugInfo .cData {
+  outline: 1.5px dashed #e67e22;
+}
+.showDebugInfo .cArrayContainer {
+  outline: 2px dashed #e67e22;
+}
+/* 动态提示样式 */
+.tooltip {
+  position: absolute;
+  z-index: 9999;
+  background: #fffbe6;
+  color: #333;
+  border: 1px solid #e6c200;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+  box-shadow: 0 2px 8px #e3eaf3;
+  pointer-events: none;
+  max-width: 320px;
+  word-break: break-all;
+  opacity: 0.98;
+}
+.heapObject, .cArrayElt, .cdataHeader {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(30,144,255,0.08);
+  background: #e2ebf6;
+  transition: box-shadow 0.2s;
+}
+.heapObject:hover, .cArrayElt:hover, .cdataHeader:hover {
+  box-shadow: 0 4px 16px rgba(30,144,255,0.18);
+  background: #e2ebf6;
+}

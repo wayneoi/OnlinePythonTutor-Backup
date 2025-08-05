@@ -92,8 +92,8 @@ export class OptLiveFrontend extends OptFrontend {
     super(params);
 
     $('#legendDiv')
-      .append('<svg id="prevLegendArrowSVG"/> line that just executed')
-      .append('<p style="margin-top: 4px"><svg id="curLegendArrowSVG"/> next line to execute</p>');
+      .append('<svg id="prevLegendArrowSVG"/> 当前执行所在行')
+      .append('<p style="margin-top: 4px"><svg id="curLegendArrowSVG"/> 下一步将要执行</p>');
 
     d3.select('svg#prevLegendArrowSVG')
         .append('polygon')

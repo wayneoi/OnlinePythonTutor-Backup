@@ -166,7 +166,7 @@ function getAppStateWithTraceCache() {
 
 function enterOPTEditCodeMode() {
   updateAppDisplayForMix('edit');
-  $("#executeBtn").html("Visualize Execution").show();
+  $("#executeBtn").html("asf").show();
   $("#executeBtn").attr('disabled', false);
 
   // https://groups.google.com/forum/#!msg/ace-discuss/TQHqey_NkBg/q9x_tLrvsXoJ

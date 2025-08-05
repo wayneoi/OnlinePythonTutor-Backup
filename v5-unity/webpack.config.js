@@ -3,6 +3,7 @@ var WebpackOnBuildPlugin = require('on-build-webpack');
 var exec = require('child_process').exec;
 
 module.exports = {
+  mode: 'development',
     plugins: [
       // http://stackoverflow.com/questions/29080148/expose-jquery-to-real-window-object-with-webpack
       new webpack.ProvidePlugin({
@@ -74,10 +75,25 @@ module.exports = {
     },
 
     module: {
-        loaders: [
-            { test: /\.css$/, loader: "style-loader!css-loader" }, // CSS
-            { test: /\.(png|jpg)$/, loader: 'url-loader' }, // images
-            { test: /\.ts$/, loader: 'ts-loader' } // TypeScript
+        rules: [
+            { 
+                test: /\.css$/, 
+                use: ['style-loader', 'css-loader']  // 使用数组形式
+            },
+            { 
+                test: /\.(png|jpg)$/, 
+                use: ['url-loader'] 
+            },
+            { 
+                test: /\.ts$/, 
+                use: [{
+                    loader: 'ts-loader',
+                    options: {
+                        configFile: 'tsconfig.json',
+                        transpileOnly: true
+                    }
+                }]
+            } // TypeScript
         ]
     },
 
